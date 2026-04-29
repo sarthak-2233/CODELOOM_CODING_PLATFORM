@@ -11,7 +11,7 @@ import ProblemPage from './pages/ProblemPage';
 import AdminDelete from './components/AdminDelete';
 import AdminUpload from './components/AdminUpload';
 import AdminVideo from './components/AdminVideo';
-
+import Admin from './pages/Admin';
 function App(){
   
   const dispatch = useDispatch();

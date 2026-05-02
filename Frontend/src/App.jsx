@@ -12,6 +12,7 @@ import AdminDelete from './components/AdminDelete';
 import AdminUpload from './components/AdminUpload';
 import AdminVideo from './components/AdminVideo';
 import Admin from './pages/Admin';
+import UserDashboard from './components/UserDashboard';
 function App(){
   
   const dispatch = useDispatch();
@@ -36,6 +37,9 @@ function App(){
       <Route path="/login" element={isAuthenticated?<Navigate to="/" />:<LoginPage></LoginPage>} ></Route>
       <Route path="/signup" element={isAuthenticated?<Navigate to="/" />:<SignUpPage></SignUpPage>}></Route>
       <Route path="/problem/:problemId" element={<ProblemPage />} />
+
+      {/* USERDASHBOARD */}
+      <Route path="/dashboard" element={<UserDashboard />} />
       {/* ADMIN ROUTE */}
    
       <Route path="/admin" element={isAuthenticated && user?.role === 'admin' ? <Admin /> : <Navigate to="/" />} />

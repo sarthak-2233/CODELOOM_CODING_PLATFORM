@@ -172,7 +172,13 @@ function HomePage() {
               <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 12px)', width: 210, zIndex: 100, background: 'rgba(18,24,20,0.98)', backdropFilter: 'blur(32px)', borderRadius: 16, border: '1px solid rgba(182,255,0,0.2)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(182,255,0,0.1)' }}>
                   <p style={{ fontSize: 10, color: '#A7ACA9', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Logged in as</p>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#F9FDF9', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.firstName}</p>
+                  <NavLink
+                    to="/dashboard"
+                    onClick={() => setUserMenuOpen(false)}
+                    style={{ fontSize: 14, fontWeight: 700, color: '#B6FE00', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', textDecoration: 'underline', cursor: 'pointer' }}
+                  >
+                    {user?.firstName}
+                  </NavLink>
                 </div>
                 {user?.role === 'admin' && (
                   <NavLink to="/admin" onClick={() => setUserMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', color: '#A7ACA9', textDecoration: 'none', fontSize: 14 }}>

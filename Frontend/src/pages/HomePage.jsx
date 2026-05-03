@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosClient from '../utils/axiosClient';
 import { logoutUser } from '../authSlice';
+import Navbar from '../LandingPage/components/Navbar'
 
 // ─── SVG Icons (no external font needed) ──────────────────────────────────────
 const IconCheck = () => (
@@ -25,27 +26,6 @@ const IconPlay = () => (
     <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm14.024-.983a1.125 1.125 0 010 1.966l-5.603 3.113A1.125 1.125 0 019 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113z" clipRule="evenodd" />
   </svg>
 );
-const IconPerson = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#B6FE00" width="22" height="22">
-    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
-  </svg>
-);
-const IconTerminal = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#415E00" width="18" height="18">
-    <path fillRule="evenodd" d="M2.25 6a3 3 0 013-3h13.5a3 3 0 013 3v12a3 3 0 01-3 3H5.25a3 3 0 01-3-3V6zm3.97.97a.75.75 0 011.06 0l2.25 2.25a.75.75 0 010 1.06l-2.25 2.25a.75.75 0 01-1.06-1.06l1.72-1.72-1.72-1.72a.75.75 0 010-1.06zm4.28 4.28a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3z" clipRule="evenodd" />
-  </svg>
-);
-const IconLogout = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-    <path fillRule="evenodd" d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm10.72 4.72a.75.75 0 011.06 0l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 11-1.06-1.06l1.72-1.72H9a.75.75 0 010-1.5h10.94l-1.72-1.72a.75.75 0 010-1.06z" clipRule="evenodd" />
-  </svg>
-);
-const IconDashboard = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-    <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
-    <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.432z" />
-  </svg>
-);
 const IconClose = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="11" height="11">
     <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
@@ -61,7 +41,6 @@ function HomePage() {
   const [filters, setFilters] = useState({ difficulty: 'all', status: 'all' });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTags, setActiveTags] = useState([]);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const availableTags = ['Array', 'String', 'linkedList', 'graph', 'dp'];
 
@@ -85,12 +64,6 @@ function HomePage() {
     fetchProblems();
     if (user) fetchSolvedProblems();
   }, [user]);
-
-  const handleLogout = () => {
-    dispatch(logoutUser());
-    setSolvedProblems([]);
-    setUserMenuOpen(false);
-  };
 
   const removeTag = (tagToRemove) => setActiveTags(activeTags.filter(t => t !== tagToRemove));
   const addTag = (tag) => { if (!activeTags.includes(tag)) setActiveTags([...activeTags, tag]); };
@@ -130,74 +103,12 @@ function HomePage() {
 
   return (
     <div style={{ background: '#0A0F0D', minHeight: '100vh', position: 'relative', boxSizing: 'border-box' }}>
-
-      {/* ── Navbar ── */}
-      <div style={{ position: 'fixed', top: 24, left: 0, right: 0, zIndex: 50, padding: '0 28px' }}>
-        <nav style={{
-          maxWidth: 1100, margin: '0 auto',
-          background: 'rgba(182,255,0,0.05)',
-          backdropFilter: 'blur(32px)',
-          borderRadius: 999,
-          padding: '12px 32px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          border: '1px solid rgba(182,255,0,0.15)',
-          boxShadow: 'inset 0 0 25px rgba(182,255,0,0.08)',
-        }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <div style={{ width: 32, height: 32, background: '#B6FE00', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconTerminal />
-            </div>
-            <NavLink to="/" style={{ fontSize: 17, fontWeight: 700, color: '#F9FDF9', textDecoration: 'none', letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>
-              LeetCode
-            </NavLink>
-          </div>
-
-          {/* Center */}
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#B6FE00', borderBottom: '1px solid rgba(182,255,0,0.4)', paddingBottom: 2 }}>
-            Problems
-          </span>
-
-          {/* User */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              style={{ position: 'relative', width: 40, height: 40, borderRadius: '50%', border: '1px solid rgba(182,255,0,0.35)', background: 'rgba(182,255,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
-            >
-              <IconPerson />
-              <span style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, background: '#68FCBF', border: '2px solid #0A0F0D', borderRadius: '50%' }} />
-            </button>
-
-            {userMenuOpen && (
-              <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 12px)', width: 210, zIndex: 100, background: 'rgba(18,24,20,0.98)', backdropFilter: 'blur(32px)', borderRadius: 16, border: '1px solid rgba(182,255,0,0.2)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(182,255,0,0.1)' }}>
-                  <p style={{ fontSize: 10, color: '#A7ACA9', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Logged in as</p>
-                  <NavLink
-                    to="/dashboard"
-                    onClick={() => setUserMenuOpen(false)}
-                    style={{ fontSize: 14, fontWeight: 700, color: '#B6FE00', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', textDecoration: 'underline', cursor: 'pointer' }}
-                  >
-                    {user?.firstName}
-                  </NavLink>
-                </div>
-                {user?.role === 'admin' && (
-                  <NavLink to="/admin" onClick={() => setUserMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', color: '#A7ACA9', textDecoration: 'none', fontSize: 14 }}>
-                    <IconDashboard /> Admin
-                  </NavLink>
-                )}
-                <div style={{ borderTop: '1px solid rgba(182,255,0,0.1)' }}>
-                  <button onClick={handleLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', color: 'rgba(255,115,81,0.85)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, textAlign: 'left' }}>
-                    <IconLogout /> Logout
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </nav>
-      </div>
+      
+      {/* Use the Navbar component */}
+      <Navbar/>
 
       {/* ── Main Content ── */}
-      <main style={{ paddingTop: 132, paddingBottom: 80, paddingLeft: 48, paddingRight: 48, maxWidth: 1440, margin: '0 auto', boxSizing: 'border-box' }}>
+      <main style={{ paddingTop: 120, paddingBottom: 80, paddingLeft: 48, paddingRight: 48, maxWidth: 1440, margin: '0 auto', boxSizing: 'border-box' }}>
 
         {/* Header */}
         <header style={{ marginBottom: 48, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
@@ -350,7 +261,8 @@ function HomePage() {
         * { box-sizing: border-box; }
         input::placeholder { color: rgba(167,172,169,0.45); }
         select option { background: #161C19 !important; color: #F9FDF9; }
-      `}</style>
+      `}</style>import Navbar from './../LandingPage/components/Navbar';
+
     </div>
   );
 }

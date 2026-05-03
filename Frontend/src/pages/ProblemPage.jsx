@@ -6,6 +6,9 @@ import axiosClient from "../utils/axiosClient";
 import SubmissionHistory from "../components/SubmissionHistory";
 import ChatAi from '../components/ChatAi';
 import Editorial from '../components/Editorial';
+import ProblemNavbar from '../components/ProblemNavbar';
+
+
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 const IconPlay = () => (
@@ -188,36 +191,11 @@ const ProblemPage = () => {
   return (
     <div style={{ background: '#0A0F0D', color: '#F9FDF9', fontFamily: 'Inter, sans-serif', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-      {/* ── Top Navbar ── */}
-      <header style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 28px', background: 'rgba(10,15,13,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(182,255,0,0.1)', zIndex: 50 }}>
-        {/* Left: logo + nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-          <NavLink to="/" style={{ fontSize: 18, fontWeight: 800, color: '#E8FFF8', textDecoration: 'none', letterSpacing: '-0.5px' }}>
-            CodeLoom
-          </NavLink>
-          <nav style={{ display: 'flex', gap: 24 }}>
-            {['Problems', 'Contests', 'Leaderboard', 'Academy'].map((item) => (
-              <span key={item} style={{ fontSize: 13, fontWeight: item === 'Problems' ? 700 : 400, color: item === 'Problems' ? '#B6FE00' : 'rgba(232,255,248,0.6)', borderBottom: item === 'Problems' ? '2px solid #B6FE00' : 'none', paddingBottom: 2, cursor: 'pointer' }}>
-                {item}
-              </span>
-            ))}
-          </nav>
-        </div>
-        {/* Right: icons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {[IconNotification, IconSettings].map((Icon, i) => (
-            <button key={i} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'transparent', color: 'rgba(232,255,248,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon />
-            </button>
-          ))}
-          <div style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid #B6FE00', background: '#1A211E', overflow: 'hidden', cursor: 'pointer' }}>
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#B6FE00', fontWeight: 700 }}>U</div>
-          </div>
-        </div>
-      </header>
+      {/* ── Navbar (Reusable Component) ── */}
+      <ProblemNavbar/>
 
       {/* ── Body: sidebar + panels ── */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', paddingTop: '70px' }}>
 
         {/* Sidebar */}
         <aside style={{ width: 64, flexShrink: 0, background: '#0A0F0D', borderRight: '1px solid rgba(182,255,0,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 24, gap: 8 }}>

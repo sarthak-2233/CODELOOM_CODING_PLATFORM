@@ -261,7 +261,7 @@ function HomePage() {
         * { box-sizing: border-box; }
         input::placeholder { color: rgba(167,172,169,0.45); }
         select option { background: #161C19 !important; color: #F9FDF9; }
-      `}</style>import Navbar from './../LandingPage/components/Navbar';
+      `}</style>
 
     </div>
   );

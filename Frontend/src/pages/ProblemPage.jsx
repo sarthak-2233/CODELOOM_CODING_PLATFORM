@@ -10,7 +10,6 @@ import ProblemNavbar from '../components/ProblemNavbar';
 
 
 
-// ─── SVG Icons ────────────────────────────────────────────────────────────────
 const IconPlay = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
     <path d="M8 5v14l11-7z"/>
@@ -80,6 +79,9 @@ const ProblemPage = () => {
   const [activeLeftTab, setActiveLeftTab] = useState('description');
   const [activeConsoleTab, setActiveConsoleTab] = useState('testcase');
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editorFontSize, setEditorFontSize] = useState(14);
+  const [editorTextColor, setEditorTextColor] = useState('white');
   const editorRef = useRef(null);
   const { problemId } = useParams();
   const { handleSubmit } = useForm();
@@ -115,6 +117,20 @@ const ProblemPage = () => {
       setCode(initialCode);
     }
   }, [selectedLanguage, problem]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.lang-dropdown-container')) {
+        setLangDropdownOpen(false);
+      }
+      if (!event.target.closest('.settings-dropdown-container')) {
+        setSettingsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleEditorChange = (value) => setCode(value || '');
   const handleEditorDidMount = (editor) => { editorRef.current = editor; };
@@ -343,7 +359,7 @@ const ProblemPage = () => {
               {/* Editor toolbar */}
               <div style={{ ...tabBarStyle, justifyContent: 'space-between', padding: '8px 16px' }}>
                 {/* Language selector */}
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative' }} className="lang-dropdown-container">
                   <button
                     onClick={() => setLangDropdownOpen(!langDropdownOpen)}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(32,39,36,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 999, padding: '6px 14px', color: '#F9FDF9', fontSize: 13, cursor: 'pointer' }}
@@ -366,27 +382,76 @@ const ProblemPage = () => {
                     </div>
                   )}
                 </div>
-                <button style={{ background: 'none', border: 'none', color: '#A7ACA9', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                  <IconSettings />
-                </button>
-              </div>
 
-              {/* Run / Submit buttons row */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-                <button
-                  onClick={handleRun}
-                  disabled={loading}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 18px', borderRadius: 999, border: '1px solid #B6FE00', background: 'transparent', color: '#E9FFBD', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
-                >
-                  <IconPlay /> Run
-                </button>
-                <button
-                  onClick={handleSubmitCode}
-                  disabled={loading}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 18px', borderRadius: 999, border: 'none', background: '#B6FE00', color: '#415E00', fontSize: 13, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, boxShadow: '0 0 20px rgba(182,255,0,0.2)' }}
-                >
-                  <IconUpload /> Submit
-                </button>
+                {/* Right side: Run, Submit, Settings */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <button
+                    onClick={handleRun}
+                    disabled={loading}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 18px', borderRadius: 999, border: '1px solid #B6FE00', background: 'transparent', color: '#E9FFBD', fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
+                  >
+                    <IconPlay /> Run
+                  </button>
+                  <button
+                    onClick={handleSubmitCode}
+                    disabled={loading}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 18px', borderRadius: 999, border: 'none', background: '#B6FE00', color: '#415E00', fontSize: 13, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, boxShadow: '0 0 20px rgba(182,255,0,0.2)' }}
+                  >
+                    <IconUpload /> Submit
+                  </button>
+                  
+                  {/* Settings dropdown */}
+                  <div style={{ position: 'relative' }} className="settings-dropdown-container">
+                    <button 
+                      onClick={() => setSettingsOpen(!settingsOpen)}
+                      style={{ background: 'none', border: 'none', color: '#A7ACA9', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '6px' }}
+                    >
+                      <IconSettings />
+                    </button>
+                    {settingsOpen && (
+                      <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, background: 'rgba(18,24,20,0.98)', border: '1px solid rgba(182,255,0,0.2)', borderRadius: 10, overflow: 'hidden', zIndex: 99, minWidth: 200, padding: '12px' }}>
+                        {/* Font Size */}
+                        <div style={{ marginBottom: 16 }}>
+                          <p style={{ fontSize: 11, fontWeight: 700, color: '#B6FE00', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Font Size</p>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {[12, 14, 16, 18, 20].map(size => (
+                              <button
+                                key={size}
+                                onClick={() => setEditorFontSize(size)}
+                                style={{ padding: '6px 12px', borderRadius: 6, border: editorFontSize === size ? '1px solid #B6FE00' : '1px solid rgba(255,255,255,0.1)', background: editorFontSize === size ? 'rgba(182,255,0,0.1)' : 'rgba(32,39,36,0.4)', color: editorFontSize === size ? '#B6FE00' : '#A7ACA9', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+                              >
+                                {size}px
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Text Color */}
+                        <div>
+                          <p style={{ fontSize: 11, fontWeight: 700, color: '#B6FE00', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Text Color</p>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {[
+                              { name: 'White', value: 'white' },
+                              { name: 'Green', value: '#68FCBF' },
+                              { name: 'Blue', value: '#4A9EFF' },
+                              { name: 'Black', value: '#000000' },
+                              { name: 'Red', value: '#FF7351' }
+                            ].map(color => (
+                              <button
+                                key={color.value}
+                                onClick={() => setEditorTextColor(color.value)}
+                                style={{ padding: '6px 12px', borderRadius: 6, border: editorTextColor === color.value ? '1px solid #B6FE00' : '1px solid rgba(255,255,255,0.1)', background: editorTextColor === color.value ? 'rgba(182,255,0,0.1)' : 'rgba(32,39,36,0.4)', color: editorTextColor === color.value ? '#B6FE00' : '#A7ACA9', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
+                              >
+                                <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: color.value, marginRight: 6, border: '1px solid rgba(255,255,255,0.2)' }} />
+                                {color.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Monaco Editor */}
@@ -399,7 +464,7 @@ const ProblemPage = () => {
                   onMount={handleEditorDidMount}
                   theme="vs-dark"
                   options={{
-                    fontSize: 13,
+                    fontSize: editorFontSize,
                     minimap: { enabled: false },
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
@@ -557,5 +622,6 @@ const ProblemPage = () => {
     </div>
   );
 };
+  
 
 export default ProblemPage;

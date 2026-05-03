@@ -164,10 +164,11 @@ const UserDashboard = () => {
     const fetchData = async () => {
       try {
         setLoadingSolved(true);
-        const res = await axiosClient.get('/problem/solvedProblems');
+        const res = await axiosClient.get('/problem/problemSolvedByUser');
         setSolvedProblems(res.data || []);
       } catch (e) {
         console.error('Error fetching solved problems:', e);
+        setSolvedProblems([]);
       } finally {
         setLoadingSolved(false);
       }
@@ -181,9 +182,29 @@ const UserDashboard = () => {
   const hardSolved   = solvedProblems.filter(p => p.difficulty?.toLowerCase() === 'hard').length;
   const totalSolved  = solvedProblems.length;
 
-  // Tag frequency
+  // Tag frequency - SAFE VERSION (handles arrays, strings, objects, null, undefined)
   const tagCounts = {};
-  solvedProblems.forEach(p => (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+  solvedProblems.forEach(p => {
+    let tagsArray = [];
+    
+    // Safely get tags regardless of format
+    if (Array.isArray(p.tags)) {
+      tagsArray = p.tags;
+    } else if (typeof p.tags === 'string' && p.tags.trim()) {
+      // Handle comma-separated string like "array,math,string"
+      tagsArray = p.tags.split(',').map(t => t.trim());
+    } else if (p.tags && typeof p.tags === 'object') {
+      // Handle if tags is an object
+      tagsArray = Object.values(p.tags);
+    }
+    // If tags is undefined, null, or empty string, tagsArray stays []
+    
+    tagsArray.forEach(t => {
+      if (t && typeof t === 'string') {
+        tagCounts[t] = (tagCounts[t] || 0) + 1;
+      }
+    });
+  });
   const topTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
   // Filtered list
@@ -460,6 +481,13 @@ const UserDashboard = () => {
                 </div>
                 {filtered.map((p, i) => {
                   const dc = DIFFICULTY_COLORS[p.difficulty?.toLowerCase()] || DIFFICULTY_COLORS.easy;
+                  // Safely get tags array for display
+                  let displayTags = [];
+                  if (Array.isArray(p.tags)) {
+                    displayTags = p.tags;
+                  } else if (typeof p.tags === 'string' && p.tags.trim()) {
+                    displayTags = p.tags.split(',').map(t => t.trim());
+                  }
                   return (
                     <div key={p._id} onClick={() => navigate(`/problem/${p._id}`)} style={{
                       display: 'grid', gridTemplateColumns: '40px 1fr 100px 120px', gap: 16,
@@ -479,7 +507,7 @@ const UserDashboard = () => {
                         {p.difficulty?.charAt(0).toUpperCase() + p.difficulty?.slice(1)}
                       </span>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                        {(p.tags || []).slice(0, 2).map(tag => (
+                        {displayTags.slice(0, 2).map(tag => (
                           <span key={tag} style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(182,255,0,0.07)', border: '1px solid rgba(182,255,0,0.15)', color: '#8BA88A', borderRadius: 4, padding: '2px 7px', fontSize: 10, fontWeight: 600 }}>
                             <IconTag />{tag}
                           </span>

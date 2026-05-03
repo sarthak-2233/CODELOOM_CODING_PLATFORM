@@ -1,61 +1,100 @@
 import React from 'react'
-import { Routes, Route ,Navigate} from "react-router";
+import { Routes, Route, Navigate } from "react-router";
+import { useSelector, useDispatch } from "react-redux";
+import { checkAuth } from './authSlice';
+import { useEffect } from 'react';
+import MainPage from './LandingPage/MainPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
-import {useSelector,useDispatch} from "react-redux";
-import { checkAuth } from './authSlice';
-import { useEffect } from 'react';
-import AdminPanel from './pages/AdminPanel';
 import ProblemPage from './pages/ProblemPage';
-import AdminDelete from './components/AdminDelete';
-import AdminUpload from './components/AdminUpload';
-import AdminVideo from './components/AdminVideo';
-import Admin from './pages/Admin';
 import UserDashboard from './components/UserDashboard';
-import MainPage from './LandingPage/MainPage';
-function App(){
-  
-  const dispatch = useDispatch();
-  // const {isAuthenticated} = useSelector((state)=>state.auth);
-  const { isAuthenticated, loading,user } = useSelector((state) => state.auth);
+import Admin from './pages/Admin';
+import AdminPanel from './pages/AdminPanel';
+import AdminDelete from './components/AdminDelete';
+import AdminVideo from './components/AdminVideo';
+import AdminUpload from './components/AdminUpload';
 
-  // check initial authentication
+
+function App() {
+  const dispatch = useDispatch();
+  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
+
   useEffect(() => {
     dispatch(checkAuth());
   }, [dispatch]);
 
- if (loading) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
       <span className="loading loading-spinner loading-lg"></span>
     </div>;
   }
 
-  return(
-  <>
+  return (
+    <>
       <Routes>
-        {/* Landing page as default route */}
+        {/* Landing page - accessible to everyone */}
         <Route path="/" element={<MainPage />} />
         
-        {/* Dashboard for authenticated users */}
-        <Route path="/dashboard" element={isAuthenticated ? <UserDashboard /> : <Navigate to="/login" />} />
+        {/* Problems page - only for authenticated users */}
+        <Route 
+          path="/problems" 
+          element={isAuthenticated ? <HomePage /> : <Navigate to="/signup" />} 
+        />
         
-        {/* Home page (your main app after login) */}
-        <Route path="/home" element={isAuthenticated ? <HomePage /> : <Navigate to="/login" />} />
+        {/* Alternative route for home */}
+        <Route 
+          path="/home" 
+          element={isAuthenticated ? <HomePage /> : <Navigate to="/signup" />} 
+        />
         
-        {/* Auth routes */}
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
-        <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignUpPage />} />
+        {/* Auth routes - redirect to problems if already authenticated */}
+        <Route 
+          path="/login" 
+          element={isAuthenticated ? <Navigate to="/problems" /> : <LoginPage />} 
+        />
         
-        {/* Problem page - protected */}
-        <Route path="/problem/:problemId" element={isAuthenticated ? <ProblemPage /> : <Navigate to="/login" />} />
+        <Route 
+          path="/signup" 
+          element={isAuthenticated ? <Navigate to="/problems" /> : <SignUpPage />} 
+        />
+        
+        {/* Problem detail page - protected */}
+        <Route 
+          path="/problem/:problemId" 
+          element={isAuthenticated ? <ProblemPage /> : <Navigate to="/signup" />} 
+        />
 
-        {/* Admin routes */}
-        <Route path="/admin" element={isAuthenticated && user?.role === 'admin' ? <Admin /> : <Navigate to="/" />} />
-        <Route path="/admin/create" element={isAuthenticated && user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
-        <Route path="/admin/delete" element={isAuthenticated && user?.role === 'admin' ? <AdminDelete /> : <Navigate to="/" />} />
-        <Route path="/admin/video" element={isAuthenticated && user?.role === 'admin' ? <AdminVideo /> : <Navigate to="/" />} />
-        <Route path="/admin/upload" element={isAuthenticated && user?.role === 'admin' ? <AdminUpload /> : <Navigate to="/" />} />
+        {/* User Dashboard - protected */}
+        <Route 
+          path="/dashboard" 
+          element={isAuthenticated ? <UserDashboard /> : <Navigate to="/signup" />} 
+        />
+        
+        {/* Admin routes - protected */}
+        <Route 
+          path="/admin" 
+          element={isAuthenticated && user?.role === 'admin' ? <Admin /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/admin/create" 
+          element={isAuthenticated && user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} 
+        />
+        <Route 
+          path="/admin/delete" 
+          element={isAuthenticated && user?.role === 'admin' ? <AdminDelete /> : <Navigate to="/" />} 
+        /> 
+        <Route 
+          path="/admin/video" 
+          element={isAuthenticated && user?.role === 'admin' ? <AdminVideo /> : <Navigate to="/" />} 
+        /> 
+        <Route 
+          path="/admin/upload" 
+          element={isAuthenticated && user?.role === 'admin' ? <AdminUpload /> : <Navigate to="/" />} 
+        />
+        
+        {/* Catch all - 404 page */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
   )

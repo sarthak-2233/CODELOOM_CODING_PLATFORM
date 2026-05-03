@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const WhyCodeLoom = () => {
   return (
@@ -23,13 +24,13 @@ const WhyCodeLoom = () => {
                 <p className="text-on-surface text-xl font-headline italic leading-relaxed mb-4">
                   "Precision engineered for the minds that build the future."
                 </p>
-                <a 
-                  href="#" 
+                 <Link 
+                  to="/manifesto" 
                   className="inline-flex items-center gap-2 text-primary-container font-medium hover:gap-3 transition-all group"
                 >
                   Read our manifesto 
                   <span className="group-hover:translate-x-1 transition-transform">→</span>
-                </a>
+                </Link>
               </div>
             </div>
           </div>

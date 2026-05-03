@@ -14,6 +14,8 @@ import AdminPanel from './pages/AdminPanel';
 import AdminDelete from './components/AdminDelete';
 import AdminVideo from './components/AdminVideo';
 import AdminUpload from './components/AdminUpload';
+import ManifestoPage from './LandingPage/components/ManifestoPage';
+import About from './LandingPage/components/About';
 
 
 function App() {
@@ -36,6 +38,12 @@ function App() {
         {/* Landing page - accessible to everyone */}
         <Route path="/" element={<MainPage />} />
         
+        {/* ManifestoPage */}
+        <Route path="/manifesto" element={<ManifestoPage />} />
+        
+        {/* About us 0*/}
+        <Route path="/about" element={<About />} />
+
         {/* Problems page - only for authenticated users */}
         <Route 
           path="/problems" 

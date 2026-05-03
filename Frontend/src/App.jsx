@@ -13,6 +13,7 @@ import AdminUpload from './components/AdminUpload';
 import AdminVideo from './components/AdminVideo';
 import Admin from './pages/Admin';
 import UserDashboard from './components/UserDashboard';
+import MainPage from './LandingPage/MainPage';
 function App(){
   
   const dispatch = useDispatch();
@@ -32,36 +33,31 @@ function App(){
 
   return(
   <>
-    <Routes>
-      <Route path="/" element={isAuthenticated ?<HomePage></HomePage>:<Navigate to="/signup" />}></Route>
-      <Route path="/login" element={isAuthenticated?<Navigate to="/" />:<LoginPage></LoginPage>} ></Route>
-      <Route path="/signup" element={isAuthenticated?<Navigate to="/" />:<SignUpPage></SignUpPage>}></Route>
-      <Route path="/problem/:problemId" element={<ProblemPage />} />
+      <Routes>
+        {/* Landing page as default route */}
+        <Route path="/" element={<MainPage />} />
+        
+        {/* Dashboard for authenticated users */}
+        <Route path="/dashboard" element={isAuthenticated ? <UserDashboard /> : <Navigate to="/login" />} />
+        
+        {/* Home page (your main app after login) */}
+        <Route path="/home" element={isAuthenticated ? <HomePage /> : <Navigate to="/login" />} />
+        
+        {/* Auth routes */}
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
+        <Route path="/signup" element={isAuthenticated ? <Navigate to="/dashboard" /> : <SignUpPage />} />
+        
+        {/* Problem page - protected */}
+        <Route path="/problem/:problemId" element={isAuthenticated ? <ProblemPage /> : <Navigate to="/login" />} />
 
-      {/* USERDASHBOARD */}
-      <Route path="/dashboard" element={<UserDashboard />} />
-      {/* ADMIN ROUTE */}
-   
-      <Route path="/admin" element={isAuthenticated && user?.role === 'admin' ? <Admin /> : <Navigate to="/" />} />
-      <Route path="/admin/create" element={isAuthenticated && user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
-      <Route path="/admin/delete" element={isAuthenticated && user?.role === 'admin' ? <AdminDelete/> : <Navigate to="/" />} /> 
-      <Route path="/admin/video" element={isAuthenticated && user?.role === 'admin' ? <AdminVideo/> : <Navigate to="/" />} /> 
-      <Route path="/admin/upload" element={isAuthenticated && user?.role === 'admin' ? <AdminUpload/> : <Navigate to="/" />} /> 
-      
+        {/* Admin routes */}
+        <Route path="/admin" element={isAuthenticated && user?.role === 'admin' ? <Admin /> : <Navigate to="/" />} />
+        <Route path="/admin/create" element={isAuthenticated && user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" />} />
+        <Route path="/admin/delete" element={isAuthenticated && user?.role === 'admin' ? <AdminDelete /> : <Navigate to="/" />} />
+        <Route path="/admin/video" element={isAuthenticated && user?.role === 'admin' ? <AdminVideo /> : <Navigate to="/" />} />
+        <Route path="/admin/upload" element={isAuthenticated && user?.role === 'admin' ? <AdminUpload /> : <Navigate to="/" />} />
       </Routes>
-      
-      {/** IF WE MANUALLY TYPE ADMIN NOT WORK AS IT GETS REFRESHED ,THUS USE A BUTTON TO NAVIGATE */}
-      {/* <Route 
-        path="/admin" 
-        element={
-          isAuthenticated && user?.role === 'admin' ? 
-            <AdminPanel /> : 
-            <Navigate to="/" />
-        } 
-      />  */}
-   
-   {/* PROBLEM PAGE */}
-  </>
+    </>
   )
 }
 

@@ -349,7 +349,7 @@ const ProblemPage = () => {
                   {activeLeftTab === 'chatAI' && (
                     <div style={{ maxWidth: 640, margin: '0 auto' }}>
                       <h2 style={{ fontSize: 20, fontWeight: 700, color: '#F9FDF9', marginBottom: 16 }}>Chat with AI</h2>
-                      <ChatAi />
+                      <ChatAi problem={problem} />
                     </div>
                   )}
                 </>

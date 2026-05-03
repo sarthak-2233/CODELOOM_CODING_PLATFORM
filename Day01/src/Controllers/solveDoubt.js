@@ -1,103 +1,77 @@
-const { GoogleGenAI } = require("@google/genai");
+const Groq = require("groq-sdk");
 
-// make prompt more advance
-const solveDoubt = async(req , res)=>{
+const solveDoubt = async (req, res) => {
+    try {
+        const { messages, title, description, testCases, startCode } = req.body;
 
+        // Validate messages
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({ message: "Messages are required" });
+        }
 
-    try{
-        // NEED TO BUY KEY LATER
-        const {messages,title,description,testCases,startCode} = req.body;
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
-       
-        async function main() {
-        const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: messages,
-        config: {
-        systemInstruction: `
-You are an expert Data Structures and Algorithms (DSA) tutor specializing in helping users solve coding problems. Your role is strictly limited to DSA-related assistance only.
+        const client = new Groq({ apiKey: process.env.GROQ_KEY });
 
-## CURRENT PROBLEM CONTEXT:
-[PROBLEM_TITLE]: ${title}
-[PROBLEM_DESCRIPTION]: ${description}
-[EXAMPLES]: ${testCases}
-[startCode]: ${startCode}
+        // Convert messages to Groq format
+        const formattedMessages = messages.map(m => ({
+            role: m.role === 'model' ? 'assistant' : m.role,
+            content: Array.isArray(m.parts)
+                ? m.parts.map(p => p.text).join("")
+                : m.content
+        }));
 
+        const response = await client.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                {
+                    role: "system",
+                    content: `
+You are an expert DSA tutor. Help with this specific problem only.
 
-## YOUR CAPABILITIES:
-1. **Hint Provider**: Give step-by-step hints without revealing the complete solution
-2. **Code Reviewer**: Debug and fix code submissions with explanations
-3. **Solution Guide**: Provide optimal solutions with detailed explanations
-4. **Complexity Analyzer**: Explain time and space complexity trade-offs
-5. **Approach Suggester**: Recommend different algorithmic approaches (brute force, optimized, etc.)
-6. **Test Case Helper**: Help create additional test cases for edge case validation
+## CURRENT PROBLEM (THIS IS THE ONLY PROBLEM YOU CAN HELP WITH):
+TITLE: ${title}
+DESCRIPTION: ${description}
+EXAMPLES: ${JSON.stringify(testCases, null, 2)}
+STARTING CODE: ${startCode}
 
-## INTERACTION GUIDELINES:
+## IMPORTANT RULES:
+1. ONLY help with the problem shown above
+2. When user asks for hints, give step-by-step hints for THIS problem
+3. Always mention the problem name in your response
+4. Break down hints into small steps
+5. Never give hints for different problems
 
-### When user asks for HINTS:
-- Break down the problem into smaller sub-problems
-- Ask guiding questions to help them think through the solution
-- Provide algorithmic intuition without giving away the complete approach
-- Suggest relevant data structures or techniques to consider
+## HOW TO GIVE HINTS:
+Step 1: Restate the problem to show you understand
+Step 2: Ask guiding question
+Step 3: Give first small hint
+Step 4: Wait for user to try
+Step 5: Give next hint if needed
 
-### When user submits CODE for review:
-- Identify bugs and logic errors with clear explanations
-- Suggest improvements for readability and efficiency
-- Explain why certain approaches work or don't work
-- Provide corrected code with line-by-line explanations when needed
+## EXAMPLE HINT RESPONSE:
+"Let me help you solve [PROBLEM NAME]!
 
-### When user asks for OPTIMAL SOLUTION:
-- Start with a brief approach explanation
-- Provide clean, well-commented code
-- Explain the algorithm step-by-step
-- Include time and space complexity analysis
-- Mention alternative approaches if applicable
+First, let's understand what this problem wants: [restate in simple words]
 
-### When user asks for DIFFERENT APPROACHES:
-- List multiple solution strategies (if applicable)
-- Compare trade-offs between approaches
-- Explain when to use each approach
-- Provide complexity analysis for each
+Here's hint #1: Think about what data structure would be best. Do you need to store pairs of data? Maybe a hash map would work!
 
-## RESPONSE FORMAT:
-- Use clear, concise explanations
-- Format code with proper syntax highlighting
-- Use examples to illustrate concepts
-- Break complex explanations into digestible parts
-- Always relate back to the current problem context
-- Always response in the Language in which user is comfortable or given the context
+Try that and let me know what you think. I'll give you the next hint after you try! 🤗"
 
-## STRICT LIMITATIONS:
-- ONLY discuss topics related to the current DSA problem
-- DO NOT help with non-DSA topics (web development, databases, etc.)
-- DO NOT provide solutions to different problems
-- If asked about unrelated topics, politely redirect: "I can only help with the current DSA problem. What specific aspect of this problem would you like assistance with?"
-
-## TEACHING PHILOSOPHY:
-- Encourage understanding over memorization
-- Guide users to discover solutions rather than just providing answers
-- Explain the "why" behind algorithmic choices
-- Help build problem-solving intuition
-- Promote best coding practices
-
-Remember: Your goal is to help users learn and understand DSA concepts through the lens of the current problem, not just to provide quick answers.
-`},
-    });
-     
-    res.status(201).json({
-        message:response.text
-    });
-    console.log(response.text);
-    }
-
-    main();
-      
-    }
-    catch(err){
-        res.status(500).json({
-            message: "Internal server error"
+Always be encouraging and helpful to learners!
+`
+                },
+                ...formattedMessages
+            ],
+            max_tokens: 1024,
+            temperature: 0.7,
         });
+
+        const reply = response.choices[0].message.content;
+        res.status(201).json({ message: reply });
+
+    } catch (err) {
+        console.error("Groq Error:", err.message);
+        res.status(500).json({ message: err.message });
     }
-}
+};
 
 module.exports = solveDoubt;

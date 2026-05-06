@@ -147,4 +147,48 @@ const deleteVideo = async (req, res) => {
   }
 };
 
-module.exports = {generateUploadSignature,saveVideoMetadata,deleteVideo};
+const getVideoByProblem = async (req, res) => {
+  try {
+    const { problemId } = req.params;
+    
+    const video = await SolutionVideo.findOne({ problemId });
+    
+    if (!video) {
+      return res.status(404).json({ error: 'No video found for this problem' });
+    }
+    
+    res.json({
+      exists: true,
+      video: {
+        id: video._id,
+        secureUrl: video.secureUrl,
+        thumbnailUrl: video.thumbnailUrl,
+        duration: video.duration,
+        uploadedAt: video.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching video:', error);
+    res.status(500).json({ error: 'Failed to fetch video' });
+  }
+};
+
+// Get all videos for a user
+const getUserVideos = async (req, res) => {
+  try {
+    const userId = req.result._id;
+    
+    const videos = await SolutionVideo.find({ userId })
+      .populate('problemId', 'title difficulty tags');
+    
+    res.json(videos);
+  } catch (error) {
+    console.error('Error fetching user videos:', error);
+    res.status(500).json({ error: 'Failed to fetch videos' });
+  }
+};
+
+
+
+
+module.exports = {generateUploadSignature,saveVideoMetadata,deleteVideo,getVideoByProblem,getUserVideos};

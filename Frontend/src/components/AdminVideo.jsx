@@ -1,4 +1,4 @@
-// AdminVideo.jsx - FULLY WORKING VERSION
+// AdminVideo.jsx - COMPLETE WORKING VERSION with Video Display
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import axiosClient from '../utils/axiosClient';
@@ -13,9 +13,15 @@ import {
   Info,
   Trash2,
   Video,
-  AlertTriangle
+  AlertTriangle,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  X
 } from 'lucide-react';
-
+import Editorial from './Editorial';
 const AdminVideo = () => {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,10 +31,21 @@ const AdminVideo = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [videosStatus, setVideosStatus] = useState({});
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [currentVideo, setCurrentVideo] = useState(null);
 
   useEffect(() => {
     fetchProblems();
   }, []);
+
+  useEffect(() => {
+    if (problems.length > 0) {
+      problems.forEach(problem => {
+        checkVideoStatus(problem._id);
+      });
+    }
+  }, [problems]);
 
   const fetchProblems = async () => {
     try {
@@ -44,6 +61,23 @@ const AdminVideo = () => {
     }
   };
 
+  const checkVideoStatus = async (problemId) => {
+    try {
+      const { data } = await axiosClient.get(`/video/problem/${problemId}`);
+      setVideosStatus(prev => ({ 
+        ...prev, 
+        [problemId]: { exists: true, ...data.video }
+      }));
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setVideosStatus(prev => ({ 
+          ...prev, 
+          [problemId]: { exists: false }
+        }));
+      }
+    }
+  };
+
   const handleVideoUpload = async (problemId, file) => {
     if (!file) {
       alert('Please select a video file first');
@@ -54,11 +88,9 @@ const AdminVideo = () => {
     setUploadProgress(0);
 
     try {
-      // Step 1: Get upload signature from backend
       const signatureResponse = await axiosClient.get(`/video/create/${problemId}`);
       const { signature, timestamp, public_id, api_key, upload_url } = signatureResponse.data;
 
-      // Step 2: Create FormData for Cloudinary upload
       const formData = new FormData();
       formData.append('file', file);
       formData.append('signature', signature);
@@ -66,7 +98,6 @@ const AdminVideo = () => {
       formData.append('public_id', public_id);
       formData.append('api_key', api_key);
 
-      // Step 3: Upload directly to Cloudinary
       const uploadResponse = await axios.post(upload_url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -79,7 +110,6 @@ const AdminVideo = () => {
 
       const cloudinaryResult = uploadResponse.data;
 
-      // Step 4: Save video metadata to backend
       await axiosClient.post('/video/save', {
         problemId: problemId,
         cloudinaryPublicId: cloudinaryResult.public_id,
@@ -87,12 +117,11 @@ const AdminVideo = () => {
         duration: cloudinaryResult.duration,
       });
       
-      alert(`✅ Video uploaded successfully for ${selectedProblem?.title}!`);
+      alert(`✅ Video uploaded successfully!`);
       setSelectedFile(null);
       setUploadProgress(0);
-      
-      // Refresh problems list to update any video status
       fetchProblems();
+      checkVideoStatus(problemId);
       
     } catch (err) {
       console.error('Upload error:', err);
@@ -112,7 +141,8 @@ const AdminVideo = () => {
     try {
       await axiosClient.delete(`/video/delete/${problemId}`);
       alert(`✅ Video deleted successfully for ${problem?.title}!`);
-      // Refresh problems list
+      setVideosStatus(prev => ({ ...prev, [problemId]: { exists: false } }));
+      if (showVideoPlayer) setShowVideoPlayer(false);
       fetchProblems();
     } catch (err) {
       console.error('Delete error:', err);
@@ -120,11 +150,22 @@ const AdminVideo = () => {
     }
   };
 
+  const handleViewVideo = (problemId) => {
+    const videoData = videosStatus[problemId];
+    if (videoData && videoData.exists) {
+      setCurrentVideo({
+        ...videoData,
+        problem: problems.find(p => p._id === problemId)
+      });
+      setShowVideoPlayer(true);
+    }
+  };
+
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
       const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
-      const maxSize = 500 * 1024 * 1024; // 500MB
+      const maxSize = 500 * 1024 * 1024;
       
       if (!validTypes.includes(file.type)) {
         alert('Please select a valid video file (MP4, WEBM, or MOV)');
@@ -189,6 +230,26 @@ const AdminVideo = () => {
 
   return (
     <div className="bg-[#0a0f0d] text-[#f9fdf9] font-body min-h-screen">
+      {/* Video Player Modal */}
+      {showVideoPlayer && currentVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-5xl">
+            <button
+              onClick={() => setShowVideoPlayer(false)}
+              className="absolute -top-12 right-0 text-white hover:text-[#b5fe00] transition-colors z-10"
+            >
+              <X size={32} />
+            </button>
+            <Editorial 
+              secureUrl={currentVideo.secureUrl}
+              thumbnailUrl={currentVideo.thumbnailUrl}
+              duration={currentVideo.duration}
+              problemTitle={currentVideo.problem?.title}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="p-4 md:p-8">
         <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -232,20 +293,21 @@ const AdminVideo = () => {
             </div>
             <div className="glass-panel rounded-lg overflow-hidden border border-[#444946]/10">
               <div className="overflow-x-auto">
-                <table className="w-full text-left min-w-[600px]">
+                <table className="w-full text-left min-w-[800px]">
                   <thead className="bg-[#1a211e] text-[#a7aca9] uppercase text-[10px] tracking-widest font-bold">
                     <tr>
                       <th className="px-6 py-4">ID</th>
                       <th className="px-6 py-4">Problem Identity</th>
                       <th className="px-6 py-4">Difficulty</th>
                       <th className="px-6 py-4">Tags</th>
+                      <th className="px-6 py-4">Video Status</th>
                       <th className="px-6 py-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#444946]/5">
                     {filteredProblems.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-6 py-12 text-center text-[#a7aca9]">
+                        <td colSpan="6" className="px-6 py-12 text-center text-[#a7aca9]">
                           No problems found. Try a different search term.
                         </td>
                       </tr>
@@ -262,7 +324,7 @@ const AdminVideo = () => {
                           </td>
                           <td className="px-6 py-5">
                             <span className="text-[#f9fdf9] font-semibold block">{problem.title}</span>
-                            <span className="text-[10px] text-[#a7aca9] capitalize">{problem.difficulty} • {problem.tags}</span>
+                            <span className="text-[10px] text-[#a7aca9] capitalize">{problem.difficulty}</span>
                           </td>
                           <td className="px-6 py-5">
                             <span className={`px-2 py-0.5 rounded ${getDifficultyBadge(problem.difficulty)} text-[10px] font-bold uppercase tracking-wider`}>
@@ -274,16 +336,34 @@ const AdminVideo = () => {
                               <span className="px-2 py-1 bg-[#202724] rounded text-[10px] text-[#a7aca9]">{problem.tags}</span>
                             </div>
                           </td>
+                          <td className="px-6 py-5">
+                            {videosStatus[problem._id]?.exists ? (
+                              <button
+                                onClick={() => handleViewVideo(problem._id)}
+                                className="flex items-center gap-2 bg-[#b5fe00]/10 text-[#b5fe00] text-xs font-bold px-3 py-1.5 rounded-full border border-[#b5fe00]/30 hover:bg-[#b5fe00]/20 transition-all"
+                              >
+                                <Video size={14} />
+                                Watch Video
+                              </button>
+                            ) : (
+                              <span className="text-[#a7aca9]/50 text-xs flex items-center gap-1">
+                                <Circle size={10} />
+                                No Video
+                              </span>
+                            )}
+                          </td>
                           <td className="px-6 py-5 text-right">
                             {selectedProblemId === problem._id ? (
                               <div className="flex items-center justify-end gap-2">
-                                <button 
-                                  onClick={() => handleDeleteVideo(problem._id)}
-                                  className="bg-[#ff7351]/20 text-[#ff7351] text-[10px] font-bold px-4 py-1.5 rounded-full border border-[#ff7351]/40 flex items-center gap-1 hover:bg-[#ff7351]/30 transition-all"
-                                >
-                                  <Trash2 size={12} />
-                                  DELETE VIDEO
-                                </button>
+                                {videosStatus[problem._id]?.exists && (
+                                  <button 
+                                    onClick={() => handleDeleteVideo(problem._id)}
+                                    className="bg-[#ff7351]/20 text-[#ff7351] text-[10px] font-bold px-4 py-1.5 rounded-full border border-[#ff7351]/40 flex items-center gap-1 hover:bg-[#ff7351]/30 transition-all"
+                                  >
+                                    <Trash2 size={12} />
+                                    DELETE
+                                  </button>
+                                )}
                                 <button className="bg-[#b5fe00]/20 text-[#b5fe00] text-[10px] font-bold px-4 py-1.5 rounded-full border border-[#b5fe00]/40 flex items-center gap-1">
                                   <CheckCircle size={12} />
                                   SELECTED
@@ -294,7 +374,7 @@ const AdminVideo = () => {
                                 onClick={() => setSelectedProblemId(problem._id)}
                                 className="bg-[#202724] text-[#f9fdf9] text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-[#b5fe00] hover:text-[#324a00] transition-all"
                               >
-                                SELECT FOR UPLOAD
+                                {videosStatus[problem._id]?.exists ? 'MANAGE VIDEO' : 'SELECT FOR UPLOAD'}
                               </button>
                             )}
                           </td>
@@ -307,7 +387,7 @@ const AdminVideo = () => {
             </div>
           </section>
 
-          {/* Conditional Upload State: Secure Upload Hub */}
+          {/* Conditional Upload State */}
           <section className="grid grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-8 glass-panel rounded-lg p-4 md:p-8 neon-glow-border relative overflow-hidden group border border-[#b5fe00]/20 shadow-[0_0_50px_rgba(182,255,0,0.05)]">
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#b5fe00]/5 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none"></div>
@@ -330,7 +410,6 @@ const AdminVideo = () => {
                 </span>
               </div>
 
-              {/* Drag & Drop / Upload Zone */}
               {selectedProblem ? (
                 <div className="flex-1 border-2 border-dashed border-[#b5fe00]/10 rounded-lg bg-[#0f1512]/50 hover:border-[#b5fe00]/30 transition-all flex flex-col items-center justify-center p-8 md:p-12 text-center cursor-pointer min-h-[300px] group/drop">
                   {uploading ? (
@@ -457,15 +536,10 @@ const AdminVideo = () => {
         </div>
       </div>
 
-      {/* Background Decoration */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#b5fe00]/10 blur-[150px] rounded-full"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-[#68fcbf]/10 blur-[200px] rounded-full"></div>
-      </div>
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap');
-        
+        import Editorial from './Editorial';
+
         .glass-panel {
           background: rgba(10, 15, 13, 0.4);
           backdrop-filter: blur(20px);

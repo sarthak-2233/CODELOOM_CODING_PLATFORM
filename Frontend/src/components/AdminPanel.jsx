@@ -5,7 +5,6 @@ import axiosClient from '../utils/axiosClient';
 import { useNavigate } from 'react-router';
 import { useState } from 'react';
 
-// Updated schema to support multiple custom tags
 const problemSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
@@ -24,25 +23,28 @@ const problemSchema = z.object({
       output: z.string().min(1, 'Output is required')
     })
   ).min(1, 'At least one hidden test case required'),
+  // ✅ FIX: min(1) instead of length(3) — allow any number of languages
   startCode: z.array(
     z.object({
       language: z.enum(['C++', 'Java', 'JavaScript']),
-      initialCode: z.string().min(1, 'Initial code is required')
+      initalCode: z.string().min(1, 'Initial code is required') // ✅ matches backend typo
     })
-  ).length(3, 'All three languages required'),
+  ).min(1, 'At least one language required'),
   referenceSolution: z.array(
     z.object({
       language: z.enum(['C++', 'Java', 'JavaScript']),
       completeCode: z.string().min(1, 'Complete code is required')
     })
-  ).length(3, 'All three languages required')
+  ).min(1, 'At least one language required')
 });
 
 function AdminPanel() {
   const navigate = useNavigate();
   const [newTag, setNewTag] = useState('');
-  const [selectedCodeLang, setSelectedCodeLang] = useState('JavaScript');
-  
+  const [selectedCodeLang, setSelectedCodeLang] = useState('C++');
+  // ✅ NEW: track which languages are checked
+  const [selectedLangs, setSelectedLangs] = useState(['C++']);
+
   const {
     register,
     control,
@@ -53,11 +55,11 @@ function AdminPanel() {
   } = useForm({
     resolver: zodResolver(problemSchema),
     defaultValues: {
-      tags: ['Array'],
+      tags: ['array'], // ✅ FIX: lowercase to match backend enum
       startCode: [
-        { language: 'C++', initialCode: '// Write your C++ code here\n#include <iostream>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}' },
-        { language: 'Java', initialCode: '// Write your Java code here\npublic class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}' },
-        { language: 'JavaScript', initialCode: '// Write your JavaScript code here\nfunction solution() {\n    // Your code here\n}' }
+        { language: 'C++', initalCode: '// Write your C++ code here\n#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}' },
+        { language: 'Java', initalCode: '// Write your Java code here\npublic class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}' },
+        { language: 'JavaScript', initalCode: '// Write your JavaScript code here\nfunction solution() {\n    // Your code here\n}' }
       ],
       referenceSolution: [
         { language: 'C++', completeCode: '// Reference solution in C++' },
@@ -79,23 +81,17 @@ function AdminPanel() {
     fields: visibleFields,
     append: appendVisible,
     remove: removeVisible
-  } = useFieldArray({
-    control,
-    name: 'visibleTestCases'
-  });
+  } = useFieldArray({ control, name: 'visibleTestCases' });
 
   const {
     fields: hiddenFields,
     append: appendHidden,
     remove: removeHidden
-  } = useFieldArray({
-    control,
-    name: 'hiddenTestCases'
-  });
+  } = useFieldArray({ control, name: 'hiddenTestCases' });
 
   const addCustomTag = () => {
-    if (newTag.trim() && !watchTags.includes(newTag.trim())) {
-      setValue('tags', [...watchTags, newTag.trim()]);
+    if (newTag.trim() && !watchTags.includes(newTag.trim().toLowerCase())) {
+      setValue('tags', [...watchTags, newTag.trim().toLowerCase()]); // ✅ always lowercase
       setNewTag('');
     }
   };
@@ -104,9 +100,39 @@ function AdminPanel() {
     setValue('tags', watchTags.filter(tag => tag !== tagToRemove));
   };
 
+  // ✅ NEW: toggle language checkbox
+  const toggleLang = (lang) => {
+    setSelectedLangs(prev =>
+      prev.includes(lang)
+        ? prev.filter(l => l !== lang)
+        : [...prev, lang]
+    );
+    // also switch editor to that language if adding
+    if (!selectedLangs.includes(lang)) setSelectedCodeLang(lang);
+  };
+
+  // ✅ FIX: filter only selected languages before sending + add problemCreator
   const onSubmit = async (data) => {
     try {
-      await axiosClient.post('/problem/create', data);
+      if (selectedLangs.length === 0) {
+        alert('Please select at least one language!');
+        return;
+      }
+
+      // ✅ get user id from token stored in localStorage
+      const token = localStorage.getItem('token');
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload._id;
+
+      const filteredData = {
+        ...data,
+        startCode: data.startCode.filter(s => selectedLangs.includes(s.language)),
+        referenceSolution: data.referenceSolution.filter(s => selectedLangs.includes(s.language)),
+        problemCreator: userId,  // ✅ send problemCreator
+        tags: data.tags[0] 
+      };
+
+      await axiosClient.post('/problem/create', filteredData);
       alert('Problem created successfully!');
       navigate('/admin/dashboard');
     } catch (error) {
@@ -137,7 +163,7 @@ function AdminPanel() {
           Architect a new algorithmic challenge for the CodeLoom ecosystem.
         </p>
       </div>
-      
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Basic Information */}
         <div className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-xl border border-[rgba(182,255,0,0.08)] overflow-hidden">
@@ -146,7 +172,7 @@ function AdminPanel() {
               <span className="material-symbols-outlined text-[#b5fe00] text-2xl">info</span>
               <h2 className="text-xl font-semibold text-[#f9fdf9] font-['Space_Grotesk']">Basic Information</h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Problem Title */}
               <div className="space-y-2">
@@ -158,9 +184,7 @@ function AdminPanel() {
                   className={`w-full bg-[#0A0F0D]/60 border ${errors.title ? 'border-red-500' : 'border-[#444946]'} rounded-xl px-5 py-3.5 text-[#f9fdf9] placeholder:text-[#a7aca9]/40 focus:outline-none focus:border-[#b5fe00] focus:ring-1 focus:ring-[#b5fe00]/50 transition-all text-base`}
                   placeholder="e.g., Matrix Spiral Traversal"
                 />
-                {errors.title && (
-                  <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>
-                )}
+                {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>}
               </div>
 
               {/* Difficulty */}
@@ -179,25 +203,20 @@ function AdminPanel() {
               </div>
             </div>
 
-            {/* Custom Tags - ADD YOUR OWN TAGS */}
+            {/* Tags */}
             <div className="mt-6 space-y-2">
               <label className="block text-[11px] font-bold text-[#b5fe00] uppercase tracking-wider ml-1">
                 Topic Tags
               </label>
               <div className="bg-[#0A0F0D]/40 rounded-xl border border-[#444946] p-4">
-                {/* Tags Display */}
                 <div className="flex flex-wrap gap-2 mb-3">
                   {watchTags.map((tag, idx) => (
-                    <span 
-                      key={idx} 
+                    <span
+                      key={idx}
                       className="bg-[#b5fe00]/10 text-[#b5fe00] px-3 py-1.5 rounded-full text-sm font-medium border border-[#b5fe00]/30 flex items-center gap-2"
                     >
                       {tag}
-                      <button 
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="hover:text-[#ff7351] transition-colors"
-                      >
+                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-[#ff7351] transition-colors">
                         <span className="material-symbols-outlined text-sm">close</span>
                       </button>
                     </span>
@@ -206,8 +225,6 @@ function AdminPanel() {
                     <span className="text-[#a7aca9]/40 text-sm">No tags added yet</span>
                   )}
                 </div>
-                
-                {/* Add Tag Input */}
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -226,9 +243,7 @@ function AdminPanel() {
                   </button>
                 </div>
               </div>
-              {errors.tags && (
-                <p className="text-red-400 text-xs mt-1">{errors.tags.message}</p>
-              )}
+              {errors.tags && <p className="text-red-400 text-xs mt-1">{errors.tags.message}</p>}
             </div>
 
             {/* Problem Description */}
@@ -245,14 +260,12 @@ function AdminPanel() {
                 placeholder="Describe the problem, constraints, and examples..."
                 rows={8}
               />
-              {errors.description && (
-                <p className="text-red-400 text-xs mt-1">{errors.description.message}</p>
-              )}
+              {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description.message}</p>}
             </div>
           </div>
         </div>
 
-        {/* Test Cases Section - Same as before */}
+        {/* Test Cases Section */}
         <div className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-xl border border-[rgba(182,255,0,0.08)] overflow-hidden">
           <div className="px-8 pt-8 pb-4">
             <div className="flex items-center gap-3 mb-6">
@@ -274,7 +287,6 @@ function AdminPanel() {
                     Add Case
                   </button>
                 </div>
-                
                 <div className="space-y-4">
                   {visibleFields.map((field, index) => (
                     <div key={field.id} className="bg-[#0A0F0D]/40 rounded-xl border border-[rgba(182,255,0,0.1)] p-5 relative group">
@@ -285,26 +297,25 @@ function AdminPanel() {
                       >
                         delete
                       </button>
-                      
                       <div className="space-y-4">
                         <div>
                           <label className="text-[10px] font-bold text-[#a7aca9] uppercase tracking-wider block mb-1.5">Input</label>
-                          <input
+                          <textarea
                             {...register(`visibleTestCases.${index}.input`)}
-                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#b5fe00]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all"
-                            placeholder="nums = [2,7,11,15], target = 9"
+                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#b5fe00]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all resize-none"
+                            placeholder="e.g: -1 0 1 2 -1 -4"
+                            rows={3}
                           />
                         </div>
-                        
                         <div>
                           <label className="text-[10px] font-bold text-[#a7aca9] uppercase tracking-wider block mb-1.5">Output</label>
-                          <input
+                          <textarea
                             {...register(`visibleTestCases.${index}.output`)}
-                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#68fcbf]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all"
-                            placeholder="[0,1]"
+                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#68fcbf]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all resize-none"
+                            placeholder={"e.g: -1 -1 2 \n-1 0 1 "}
+                            rows={3}
                           />
                         </div>
-                        
                         <div>
                           <label className="text-[10px] font-bold text-[#a7aca9] uppercase tracking-wider block mb-1.5">Explanation</label>
                           <textarea
@@ -333,7 +344,6 @@ function AdminPanel() {
                     Add Case
                   </button>
                 </div>
-                
                 <div className="space-y-4">
                   {hiddenFields.map((field, index) => (
                     <div key={field.id} className="bg-[#0A0F0D]/40 rounded-xl border border-[rgba(182,255,0,0.1)] p-5 relative group">
@@ -344,29 +354,28 @@ function AdminPanel() {
                       >
                         delete
                       </button>
-                      
                       <div className="space-y-4">
                         <div>
                           <label className="text-[10px] font-bold text-[#a7aca9] uppercase tracking-wider block mb-1.5">Input</label>
-                          <input
+                          <textarea
                             {...register(`hiddenTestCases.${index}.input`)}
-                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#b5fe00]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all"
+                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#b5fe00]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all resize-none"
                             placeholder="Hidden test input"
+                            rows={3}
                           />
                         </div>
-                        
                         <div>
                           <label className="text-[10px] font-bold text-[#a7aca9] uppercase tracking-wider block mb-1.5">Output</label>
-                          <input
+                          <textarea
                             {...register(`hiddenTestCases.${index}.output`)}
-                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#68fcbf]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all"
+                            className="w-full font-mono text-sm p-3 bg-black/40 rounded-lg text-[#68fcbf]/80 border border-[#444946] focus:outline-none focus:border-[#b5fe00] transition-all resize-none"
                             placeholder="Expected output"
+                            rows={3}
                           />
                         </div>
                       </div>
                     </div>
                   ))}
-                  
                   {hiddenFields.length === 0 && (
                     <div className="bg-[#0A0F0D]/40 rounded-xl border border-dashed border-[rgba(182,255,0,0.2)] p-8 text-center">
                       <p className="text-xs text-[#a7aca9]/60">No hidden cases defined yet.</p>
@@ -379,7 +388,7 @@ function AdminPanel() {
           </div>
         </div>
 
-        {/* Code Templates Section - WITH LANGUAGE DROPDOWN */}
+        {/* Code Templates Section */}
         <div className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-xl border border-[rgba(182,255,0,0.08)] overflow-hidden">
           <div className="px-8 pt-8 pb-8">
             <div className="flex items-center gap-3 mb-6">
@@ -387,25 +396,53 @@ function AdminPanel() {
               <h2 className="text-xl font-semibold text-[#f9fdf9] font-['Space_Grotesk']">Code Templates</h2>
             </div>
 
-            {/* Language Dropdown */}
+            {/* ✅ NEW: Language Checkboxes */}
+            <div className="mb-6">
+              <label className="block text-[11px] font-bold text-[#b5fe00] uppercase tracking-wider mb-3 ml-1">
+                Select Languages to Include
+              </label>
+              <div className="flex gap-6">
+                {languageOptions.map(lang => (
+                  <label key={lang.value} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={selectedLangs.includes(lang.value)}
+                      onChange={() => toggleLang(lang.value)}
+                      className="accent-[#b5fe00] w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-[#f9fdf9] text-sm group-hover:text-[#b5fe00] transition-colors">
+                      {lang.icon} {lang.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {selectedLangs.length === 0 && (
+                <p className="text-red-400 text-xs mt-2">⚠️ Select at least one language</p>
+              )}
+            </div>
+
+            {/* Language Dropdown — only shows selected languages */}
             <div className="mb-8">
               <label className="block text-[11px] font-bold text-[#b5fe00] uppercase tracking-wider mb-2 ml-1">
-                Select Language
+                Edit Code For
               </label>
               <select
                 value={selectedCodeLang}
                 onChange={(e) => setSelectedCodeLang(e.target.value)}
                 className="w-full md:w-64 bg-[#0A0F0D]/60 border border-[#444946] rounded-xl px-5 py-3 text-[#f9fdf9] focus:outline-none focus:border-[#b5fe00] focus:ring-1 focus:ring-[#b5fe00]/50 transition-all cursor-pointer"
               >
-                {languageOptions.map(lang => (
-                  <option key={lang.value} value={lang.value}>
-                    {lang.icon} {lang.label}
-                  </option>
-                ))}
+                {/* ✅ Only show checked languages in dropdown */}
+                {languageOptions
+                  .filter(lang => selectedLangs.includes(lang.value))
+                  .map(lang => (
+                    <option key={lang.value} value={lang.value}>
+                      {lang.icon} {lang.label}
+                    </option>
+                  ))}
               </select>
             </div>
 
-            {/* Show code editor for selected language */}
+            {/* Code Editor */}
             {(() => {
               const langIndex = getLanguageIndex(selectedCodeLang);
               const langInfo = languageOptions.find(l => l.value === selectedCodeLang);
@@ -426,14 +463,14 @@ function AdminPanel() {
                         <span className="text-[10px] text-[#a7aca9]/40 ml-2">{langInfo?.label}</span>
                       </div>
                       <textarea
-                        {...register(`startCode.${langIndex}.initialCode`)}
+                        {...register(`startCode.${langIndex}.initalCode`)} // ✅ matches backend typo
                         className="w-full bg-transparent border-none focus:outline-none p-5 font-mono text-sm text-[#b5fe00]/70 leading-relaxed resize-none"
                         rows={10}
                         placeholder={`// Write your ${selectedCodeLang} starter code here...`}
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-bold text-[#a7aca9] uppercase tracking-wider">
@@ -460,10 +497,9 @@ function AdminPanel() {
               );
             })()}
 
-            {/* Show indicator for other languages */}
             <div className="mt-6 pt-4 border-t border-[rgba(182,255,0,0.08)]">
               <p className="text-[10px] text-[#a7aca9]/40 text-center">
-                💡 All three languages (C++, Java, JavaScript) will be saved. Use dropdown to edit each one.
+                💡 Only checked languages will be submitted. Use dropdown to edit each one.
               </p>
             </div>
           </div>
@@ -473,7 +509,7 @@ function AdminPanel() {
         <div className="flex justify-end pt-6 pb-4">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || selectedLangs.length === 0}
             className="bg-[#b5fe00] text-[#1a2e00] px-10 py-4 rounded-full font-bold text-base uppercase tracking-wider hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_30px_rgba(182,255,0,0.2)] hover:shadow-[0_0_40px_rgba(182,255,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 group"
           >
             {isSubmitting ? (
@@ -499,23 +535,12 @@ function AdminPanel() {
         .material-symbols-outlined {
           font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        
         textarea, input, select {
           transition: all 0.2s ease;
         }
-        
-        ::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: #444946;
-          border-radius: 10px;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444946; border-radius: 10px; }
       `}</style>
     </div>
   );

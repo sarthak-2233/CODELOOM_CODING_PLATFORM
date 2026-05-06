@@ -1,5 +1,6 @@
-// AdminVideo.jsx - MERGED VERSION (Beautiful design + Working backend)
+// AdminVideo.jsx - FULLY WORKING VERSION
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import axiosClient from '../utils/axiosClient';
 import { 
   Search, 
@@ -49,25 +50,50 @@ const AdminVideo = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('video', file);
-    formData.append('problemId', problemId);
-
     setUploading(true);
     setUploadProgress(0);
 
     try {
-      const response = await axiosClient.post('/video/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      // Step 1: Get upload signature from backend
+      const signatureResponse = await axiosClient.get(`/video/create/${problemId}`);
+      const { signature, timestamp, public_id, api_key, upload_url } = signatureResponse.data;
+
+      // Step 2: Create FormData for Cloudinary upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('signature', signature);
+      formData.append('timestamp', timestamp);
+      formData.append('public_id', public_id);
+      formData.append('api_key', api_key);
+
+      // Step 3: Upload directly to Cloudinary
+      const uploadResponse = await axios.post(upload_url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(percentCompleted);
-        }
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(progress);
+        },
+      });
+
+      const cloudinaryResult = uploadResponse.data;
+
+      // Step 4: Save video metadata to backend
+      await axiosClient.post('/video/save', {
+        problemId: problemId,
+        cloudinaryPublicId: cloudinaryResult.public_id,
+        secureUrl: cloudinaryResult.secure_url,
+        duration: cloudinaryResult.duration,
       });
       
       alert(`✅ Video uploaded successfully for ${selectedProblem?.title}!`);
       setSelectedFile(null);
       setUploadProgress(0);
+      
+      // Refresh problems list to update any video status
+      fetchProblems();
+      
     } catch (err) {
       console.error('Upload error:', err);
       alert(`❌ Upload failed: ${err.response?.data?.message || err.message}`);
@@ -86,6 +112,8 @@ const AdminVideo = () => {
     try {
       await axiosClient.delete(`/video/delete/${problemId}`);
       alert(`✅ Video deleted successfully for ${problem?.title}!`);
+      // Refresh problems list
+      fetchProblems();
     } catch (err) {
       console.error('Delete error:', err);
       alert(`❌ Delete failed: ${err.response?.data?.message || err.message}`);
@@ -116,7 +144,7 @@ const AdminVideo = () => {
 
   const filteredProblems = problems.filter(problem =>
     problem.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    problem.tags?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (problem.tags && problem.tags?.toLowerCase().includes(searchTerm.toLowerCase())) ||
     problem._id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -310,7 +338,7 @@ const AdminVideo = () => {
                       <div className="w-20 h-20 bg-[#b5fe00]/20 rounded-full flex items-center justify-center mb-4 mx-auto">
                         <CloudUpload className="text-4xl text-[#b5fe00] animate-pulse" size={40} />
                       </div>
-                      <h3 className="text-lg md:text-xl font-body text-[#f9fdf9] mb-2">Uploading...</h3>
+                      <h3 className="text-lg md:text-xl font-body text-[#f9fdf9] mb-2">Uploading to Cloudinary...</h3>
                       <div className="w-full bg-[#202724] rounded-full h-2 mb-2">
                         <div 
                           className="bg-[#b5fe00] h-2 rounded-full transition-all duration-300"
@@ -357,6 +385,9 @@ const AdminVideo = () => {
                           onChange={handleFileSelect}
                         />
                       </label>
+                      <p className="text-[#a7aca9]/50 text-xs mt-4">
+                        Maximum file size: 500MB
+                      </p>
                     </>
                   )}
                 </div>

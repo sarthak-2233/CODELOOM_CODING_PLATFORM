@@ -10,11 +10,11 @@ const Manifesto = () => {
         <nav className="bg-lime-400/10 backdrop-blur-xl rounded-full mt-6 mx-auto max-w-fit px-8 py-3 ring-1 ring-lime-400/20 shadow-[0_0_20px_rgba(182,255,0,0.15)] flex items-center gap-8">
           <div className="text-xl font-bold tracking-tighter text-[#f9fdf9] font-['Space_Grotesk']">CodeLoom</div>
           <div className="hidden md:flex items-center gap-6">
-            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00] transition-colors font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Platform</a>
-            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00] transition-colors font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Courses</a>
-            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00] transition-colors font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Docs</a>
-            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00] transition-colors font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Community</a>
-            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00] transition-colors font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Pricing</a>
+            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00]  font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Platform</a>
+            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00]  font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Courses</a>
+            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00]  font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Docs</a>
+            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00]  font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Community</a>
+            <a className="text-[#f9fdf9]/70 hover:text-[#b5fe00]  font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300" href="#">Pricing</a>
           </div>
           <div className="flex items-center gap-4 border-l border-lime-400/20 pl-6">
             <button className="text-[#b5fe00] font-['Space_Grotesk'] tracking-tight text-sm font-semibold hover:scale-105 transition-transform duration-300 active:scale-95 cursor-pointer">Dashboard</button>

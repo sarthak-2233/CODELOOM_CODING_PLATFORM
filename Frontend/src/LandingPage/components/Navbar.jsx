@@ -179,7 +179,7 @@ const Navbar = () => {
               <>
                 <button 
                   onClick={handleLogin}
-                  className={`text-sm font-medium text-[#A7ACA9] hover:text-[#B6FE00] transition-all ${
+                  className={`text-sm font-medium text-[#A7ACA9] hover:cursor-pointer hover:text-[#B6FE00] transition-all ${
                     scrolled ? 'hidden sm:block' : 'block'
                   }`}
                 >
@@ -187,7 +187,7 @@ const Navbar = () => {
                 </button>
                 <button 
                   onClick={handleSignUp}
-                  className="bg-[#B6FE00] text-[#1A2E05] font-headline rounded-full font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-[#B6FE00]/20 px-5 py-1.5"
+                  className="bg-[#B6FE00] text-[#1A2E05] font-headline rounded-full font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-[#B6FE00]/20 px-5 py-1.5 hover:cursor-pointer"
                 >
                   Sign Up
                 </button>

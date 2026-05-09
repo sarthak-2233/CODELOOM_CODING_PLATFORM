@@ -85,7 +85,7 @@ const authSlice = createSlice({
   reducers: {
     // For Google/GitHub OAuth login
     loginSuccess: (state, action) => {
-      console.log("📝 loginSuccess reducer called with:", action.payload);
+      
       state.isAuthenticated = true;
       state.loading = false;
       state.error = null;

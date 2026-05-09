@@ -244,7 +244,9 @@ function LoginPage() {
           {/* Social auth */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
             {/* Google */}
-            <button style={{
+            <button 
+             onClick={() => window.location.href = 'http://localhost:8080/user/auth/google'}
+            style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               background: '#151B18', border: '1px solid rgba(68,73,70,0.25)',
               borderRadius: '50px', padding: '9px', cursor: 'pointer',

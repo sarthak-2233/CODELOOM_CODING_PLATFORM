@@ -16,7 +16,6 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-
 export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
@@ -40,7 +39,7 @@ export const checkAuth = createAsyncThunk(
       return data.user;
     } catch (error) {
       if (error.response?.status === 401) {
-        return rejectWithValue(null); // Special case for no session
+        return rejectWithValue(null);
       }
       return rejectWithValue({
     message: error.response?.data?.message || error.message,
@@ -74,6 +73,22 @@ const authSlice = createSlice({
     error: null
   },
   reducers: {
+    // ✅ ADD THIS - for Google/GitHub OAuth login
+    loginSuccess: (state, action) => {
+      state.user = action.payload.user || action.payload;
+      state.isAuthenticated = true;
+      state.loading = false;
+      state.error = null;
+    },
+    // ✅ ADD THIS - to clear errors
+    clearError: (state) => {
+      state.error = null;
+    },
+    // ✅ ADD THIS - to manually set user (if needed)
+    setUser: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = !!action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -147,5 +162,8 @@ const authSlice = createSlice({
       });
   }
 });
+
+// ✅ Export the actions
+export const { loginSuccess, clearError, setUser } = authSlice.actions;
 
 export default authSlice.reducer;

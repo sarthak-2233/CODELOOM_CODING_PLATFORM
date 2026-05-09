@@ -12,16 +12,35 @@ const problemRouter=require('./Routes/problemRoute')
 const submitRouter=require('./Routes/submitRoute')
 const aiChattingRouter=require('./Routes/aiChatting')
 const videoRouter = require("./routes/videoCreator");
+// Google OAuth configuration
+const passport = require('passport');
+
+require('./Config/googleAuth'); 
 // CORS
 const cors=require('cors')
 app.use(cors({
     origin: 'http://localhost:5173',
     credentials: true 
 }))
+// SESSION MIDDLEWARE
+const session = require('express-session');
+
+// Add this AFTER app initialization, BEFORE passport
+app.use(session({
+  secret: 'your_secret_key_here',  // Change this to something random
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,  // Set to true if using HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 // MIDDLEWARE
 app.use(cookieParser()); // to parse cookies from incoming requests
 app.use(express.json()); // convert incoming JSON requests to JS objects
-
+app.use(passport.initialize());
+app.use(passport.session());
 // ROUTES
 app.use('/user',authRouter)
 app.use('/problem',problemRouter)

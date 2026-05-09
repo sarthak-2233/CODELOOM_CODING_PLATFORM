@@ -25,6 +25,7 @@ import AdminVideo from './components/AdminVideo';      // Video solution
 // OTHER PAGES
 import ManifestoPage from './LandingPage/components/ManifestoPage';
 import About from './LandingPage/components/About';
+import AuthSuccess from './utils/AuthSuccess';
 
 function App() {
   const dispatch = useDispatch();
@@ -136,7 +137,11 @@ function App() {
           path="/admin-upload" 
           element={isAuthenticated && user?.role === 'admin' ? <AdminUpload /> : <Navigate to="/" />} 
         />
-        
+        {/* GOOGLE OAUTH  */}
+          <Route path="/auth-success" element={<AuthSuccess />} />
+
+
+
         {/* ========== 404 CATCH ALL ========== */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

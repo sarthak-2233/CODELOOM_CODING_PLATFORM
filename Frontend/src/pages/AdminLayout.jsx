@@ -104,13 +104,7 @@ const AdminLayout = () => {
         </main>
       </div>
 
-      {/* FAB Button */}
-      <button className="fixed bottom-10 right-10 w-16 h-16 bg-[#b5fe00] text-[#476700] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(182,255,0,0.3)] hover:scale-110 active:scale-95 transition-all z-50 group">
-        <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
-        <div className="absolute right-20 bg-[#1a211e] px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-[#f9fdf9] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-[#b5fe00]/20">
-          Quick Add Problem
-        </div>
-      </button>
+      
     </div>
   );
 };

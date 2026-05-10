@@ -27,6 +27,9 @@ import ManifestoPage from './LandingPage/components/ManifestoPage';
 import About from './LandingPage/components/About';
 import AuthSuccess from './utils/AuthSuccess';
 import VisualizationsRoutes from './Visualisation/VisualizationsRoutes';
+import ProblemUpdate from './components/ProblemUpdate';
+
+
 
 function App() {
   const dispatch = useDispatch();
@@ -114,7 +117,7 @@ function App() {
           
           {/* CRUD Operations - THESE ARE YOUR WORKING BACKEND COMPONENTS */}
           <Route path="create" element={<AdminPanel />} />    {/* Create problem */}
-          <Route path="update" element={<AdminUpload />} />   {/* Update problem */}
+          <Route path="update" element={<ProblemUpdate />} />   {/* Update problem */}
           <Route path="delete" element={<AdminDelete />} />   {/* Delete problem */}
           <Route path="video" element={<AdminVideo />} />     {/* Video solution */}
         </Route>
@@ -131,7 +134,7 @@ function App() {
         />
         <Route 
           path="/admin-update" 
-          element={isAuthenticated && user?.role === 'admin' ? <AdminUpload /> : <Navigate to="/" />} 
+          element={isAuthenticated && user?.role === 'admin' ? <ProblemUpdate /> : <Navigate to="/" />} 
         />
         <Route 
           path="/admin-delete" 

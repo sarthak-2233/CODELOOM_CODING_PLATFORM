@@ -82,6 +82,8 @@ const ProblemPage = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editorFontSize, setEditorFontSize] = useState(14);
   const [editorTextColor, setEditorTextColor] = useState('white');
+  // Mobile: which panel is active — 'problem' or 'editor'
+  const [mobilePanelActive, setMobilePanelActive] = useState('problem');
   const editorRef = useRef(null);
   const { problemId } = useParams();
   const { handleSubmit } = useForm();
@@ -213,8 +215,8 @@ const ProblemPage = () => {
       {/* ── Body: sidebar + panels ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', paddingTop: '70px' }}>
 
-        {/* Sidebar */}
-        <aside style={{ width: 64, flexShrink: 0, background: '#0A0F0D', borderRight: '1px solid rgba(182,255,0,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 24, gap: 8 }}>
+        {/* Sidebar — hidden on mobile */}
+        <aside className="problem-sidebar" style={{ width: 64, flexShrink: 0, background: '#0A0F0D', borderRight: '1px solid rgba(182,255,0,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 24, gap: 8 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
             <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'rgba(182,255,0,0.1)', borderRight: '3px solid #B6FE00', color: '#B6FE00' }}>
               <IconCode />
@@ -224,12 +226,38 @@ const ProblemPage = () => {
         </aside>
 
         {/* Main two-panel workspace */}
-        <main style={{ flex: 1, display: 'flex', gap: 12, padding: '12px 12px 12px 8px', overflow: 'hidden' }}>
+        <main className="problem-main" style={{ flex: 1, display: 'flex', gap: 12, padding: '12px 12px 12px 8px', overflow: 'hidden' }}>
+
+          {/* Mobile panel switcher */}
+          <div className="mobile-panel-switcher" style={{ display: 'none' }}>
+            <button
+              onClick={() => setMobilePanelActive('problem')}
+              style={{
+                flex: 1, padding: '10px', fontSize: 13, fontWeight: 600,
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: mobilePanelActive === 'problem' ? '#B6FE00' : '#A7ACA9',
+                borderBottom: mobilePanelActive === 'problem' ? '2px solid #B6FE00' : '2px solid transparent',
+              }}
+            >
+              Problem
+            </button>
+            <button
+              onClick={() => setMobilePanelActive('editor')}
+              style={{
+                flex: 1, padding: '10px', fontSize: 13, fontWeight: 600,
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: mobilePanelActive === 'editor' ? '#B6FE00' : '#A7ACA9',
+                borderBottom: mobilePanelActive === 'editor' ? '2px solid #B6FE00' : '2px solid transparent',
+              }}
+            >
+              Editor
+            </button>
+          </div>
 
           {/* ── LEFT PANEL: Problem description ── */}
-          <section style={{ ...panelStyle, width: '50%', flexShrink: 0 }}>
+          <section className={`left-panel ${mobilePanelActive === 'problem' ? 'mobile-active' : 'mobile-hidden'}`} style={{ ...panelStyle, width: '50%', flexShrink: 0 }}>
             {/* Tab bar */}
-            <div style={tabBarStyle}>
+            <div style={{ ...tabBarStyle, overflowX: 'auto' }}>
               {leftTabs.map(({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -240,6 +268,8 @@ const ProblemPage = () => {
                     color: activeLeftTab === id ? '#B6FE00' : '#A7ACA9',
                     borderBottom: activeLeftTab === id ? '2px solid #B6FE00' : '2px solid transparent',
                     fontWeight: activeLeftTab === id ? 600 : 400,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
                   }}
                 >
                   <Icon /> {label}
@@ -281,7 +311,7 @@ const ProblemPage = () => {
                             {problem.visibleTestCases.map((example, index) => (
                               <div key={index}>
                                 <p style={{ fontSize: 14, fontWeight: 600, color: '#F9FDF9', marginBottom: 8 }}>Example {index + 1}:</p>
-                                <div style={{ background: '#000', padding: 20, borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', fontFamily: 'monospace', fontSize: 13, lineHeight: 1.9 }}>
+                                <div style={{ background: '#000', padding: 20, borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', fontFamily: 'monospace', fontSize: 13, lineHeight: 1.9, overflowX: 'auto' }}>
                                   <div><span style={{ color: 'rgba(170,239,0,0.65)' }}>Input:</span> <span style={{ color: '#F9FDF9' }}>{example.input}</span></div>
                                   <div><span style={{ color: 'rgba(170,239,0,0.65)' }}>Output:</span> <span style={{ color: '#F9FDF9' }}>{example.output}</span></div>
                                   {example.explanation && (
@@ -352,12 +382,12 @@ const ProblemPage = () => {
           </section>
 
           {/* ── RIGHT PANEL: IDE + Console ── */}
-          <section style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+          <section className={`right-panel ${mobilePanelActive === 'editor' ? 'mobile-active' : 'mobile-hidden'}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
 
             {/* Editor container */}
             <div style={{ ...panelStyle, flex: 1 }}>
               {/* Editor toolbar */}
-              <div style={{ ...tabBarStyle, justifyContent: 'space-between', padding: '8px 16px' }}>
+              <div style={{ ...tabBarStyle, justifyContent: 'space-between', padding: '8px 16px', flexWrap: 'wrap', gap: 8 }}>
                 {/* Language selector */}
                 <div style={{ position: 'relative' }} className="lang-dropdown-container">
                   <button
@@ -384,7 +414,7 @@ const ProblemPage = () => {
                 </div>
 
                 {/* Right side: Run, Submit, Settings */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <button
                     onClick={handleRun}
                     disabled={loading}
@@ -519,7 +549,7 @@ const ProblemPage = () => {
                     {runResult ? (
                       <div>
                         {/* Status header */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, color: runResult.success ? '#68FCBF' : '#FF7351' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, color: runResult.success ? '#68FCBF' : '#FF7351', flexWrap: 'wrap' }}>
                           {runResult.success ? <IconCheckCircle /> : <IconError />}
                           <span style={{ fontWeight: 700, fontSize: 14 }}>
                             {runResult.success ? 'All test cases passed!' : 'Some test cases failed'}
@@ -573,7 +603,7 @@ const ProblemPage = () => {
                   <div>
                     {submitResult ? (
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, color: submitResult.accepted ? '#68FCBF' : '#FF7351' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, color: submitResult.accepted ? '#68FCBF' : '#FF7351', flexWrap: 'wrap' }}>
                           {submitResult.accepted ? <IconCheckCircle /> : <IconError />}
                           <span style={{ fontSize: 18, fontWeight: 700 }}>
                             {submitResult.accepted ? '🎉 Accepted' : `❌ ${submitResult.error || 'Wrong Answer'}`}
@@ -618,6 +648,77 @@ const ProblemPage = () => {
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #0A0F0D; }
         ::-webkit-scrollbar-thumb { background: rgba(182,255,0,0.2); border-radius: 10px; }
+
+        /* ── Tablet: stack panels vertically, hide sidebar ── */
+        @media (max-width: 900px) {
+          .problem-sidebar {
+            display: none !important;
+          }
+          .problem-main {
+            flex-direction: column !important;
+            padding: 8px !important;
+            gap: 8px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+          }
+          .left-panel {
+            width: 100% !important;
+            flex-shrink: 0 !important;
+            height: 50vh !important;
+            min-height: 300px !important;
+          }
+          .right-panel {
+            flex: none !important;
+            height: 60vh !important;
+            min-height: 400px !important;
+          }
+          .mobile-panel-switcher {
+            display: none !important;
+          }
+        }
+
+        /* ── Mobile: show one panel at a time with switcher ── */
+        @media (max-width: 600px) {
+          .problem-main {
+            flex-direction: column !important;
+            padding: 0 !important;
+            gap: 0 !important;
+            overflow: hidden !important;
+            position: relative !important;
+          }
+          .mobile-panel-switcher {
+            display: flex !important;
+            width: 100% !important;
+            background: rgba(21,27,24,0.95) !important;
+            border-bottom: 1px solid rgba(182,255,0,0.1) !important;
+            flex-shrink: 0 !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 10 !important;
+          }
+          .left-panel {
+            width: 100% !important;
+            height: calc(100vh - 70px - 44px) !important;
+            border-radius: 0 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: none !important;
+          }
+          .right-panel {
+            width: 100% !important;
+            height: calc(100vh - 70px - 44px) !important;
+            border-radius: 0 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: none !important;
+          }
+          .mobile-hidden {
+            display: none !important;
+          }
+          .mobile-active {
+            display: flex !important;
+          }
+        }
       `}</style>
     </div>
   );

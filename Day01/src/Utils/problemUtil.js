@@ -1,14 +1,16 @@
 const axios = require('axios');
 
+// ✅ Handles all casing variants — input should already be normalized
+//    but .toLowerCase() is a safety net
 const getLanguageByid = (lang) => {
     const language = {
         "c++": 54,
         "java": 62,
         "javascript": 63,
         "python": 71,
-    }
-    return language[lang.toLowerCase()];
-}
+    };
+    return language[lang?.toLowerCase()] || null;
+};
 
 const submitBatch = async (submissions) => {
     const options = {
@@ -29,19 +31,18 @@ const submitBatch = async (submissions) => {
 
     try {
         const response = await axios.request(options);
-        return response.data; // Returns array of {token}
+        return response.data;
     } catch (error) {
         console.error('Error in submitBatch:', error.response?.data || error.message);
         throw error;
     }
-}
+};
 
-// ✅ FIXED: Proper async waiting function
 const waiting = (ms) => {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
-}
+};
 
 const submitToken = async (resultTokens) => {
     const options = {
@@ -68,17 +69,15 @@ const submitToken = async (resultTokens) => {
         }
     }
 
-    // ✅ FIXED: Poll for results until all are ready
     let result = await fetchData();
-    
-    // Check if submissions are still processing
+
+    // Poll until all submissions finish (status_id > 2 means done)
     while (result.submissions && !result.submissions.every((r) => r.status_id > 2)) {
         console.log('Waiting for results...', result.submissions.map(r => r.status_id));
-        await waiting(1000); // Wait 1 second
-        result = await fetchData(); // Fetch again
+        await waiting(1000);
+        result = await fetchData();
     }
-    
-    // ✅ FIXED: Return the submissions array
+
     if (result && result.submissions) {
         return result.submissions;
     } else if (Array.isArray(result)) {
@@ -87,6 +86,6 @@ const submitToken = async (resultTokens) => {
         console.error('Unexpected response format:', result);
         return [];
     }
-}
+};
 
 module.exports = { getLanguageByid, submitBatch, submitToken };

@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, NavLink } from 'react-router';
 import { loginUser } from "../authSlice";
 import { useEffect, useState } from 'react';
+import Navbar from './../LandingPage/components/Navbar';
 
 const signupSchema = z.object({
   emailId: z.string().email("Invalid Email"),
@@ -64,12 +65,7 @@ function LoginPage() {
           borderRadius: '50%', filter: 'blur(100px)', pointerEvents: 'none',
         }} />
 
-        {/* Brand */}
-        <div style={{ position: 'fixed', top: 0, width: '100%', padding: '20px 0', display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '22px', fontWeight: 700, color: '#B6FE00', letterSpacing: '-0.5px', margin: 0 }}>
-            CodeLoom
-          </h1>
-        </div>
+          <Navbar/>        
 
         {/* Card */}
         <div style={{
@@ -85,6 +81,7 @@ function LoginPage() {
           position: 'relative',
           zIndex: 10,
         }}>
+          
           {/* Heading */}
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '22px', fontWeight: 700, color: '#F9FDF9', margin: '0 0 4px', letterSpacing: '-0.3px' }}>
@@ -284,11 +281,6 @@ function LoginPage() {
           </div>
         </div>
 
-        {/* System status */}
-        <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#68FCBF', boxShadow: '0 0 6px rgba(104,252,191,0.8)', display: 'inline-block' }} />
-          <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#A7ACA9' }}>System Status: All systems operational</span>
-        </div>
 
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>

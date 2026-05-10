@@ -14,7 +14,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Problems', path: '/problems', id: 1 },
-    { name: 'Visualise', path: '/visualise', id: 2 },
+    { name: 'Visualise', path: '/visualise/sorting', id: 2 },
     { name: 'Docs', externalUrl: 'https://github.com/sarthak-2233/CODELOOM_CODING_PLATFORM', id: 3 },
     { name: 'About Us', path: '/about', id: 4 },
   ];

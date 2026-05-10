@@ -26,6 +26,7 @@ import AdminVideo from './components/AdminVideo';      // Video solution
 import ManifestoPage from './LandingPage/components/ManifestoPage';
 import About from './LandingPage/components/About';
 import AuthSuccess from './utils/AuthSuccess';
+import VisualizationsRoutes from './Visualisation/VisualizationsRoutes';
 
 function App() {
   const dispatch = useDispatch();
@@ -84,6 +85,13 @@ function App() {
           path="/dashboard" 
           element={isAuthenticated ? <UserDashboard /> : <Navigate to="/signup" />} 
         />
+
+          {/* Visualizations */}
+         <Route 
+        path="/visualise/*" 
+        element= {<VisualizationsRoutes />} 
+      />
+
 
         {/* ========== ADMIN ROUTES (Need to be admin) ========== */}
         {/* 

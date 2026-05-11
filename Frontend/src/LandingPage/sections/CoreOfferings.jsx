@@ -3,10 +3,21 @@ import { motion, useInView } from 'framer-motion';
 import PremiumCard from './../components/PremiumCard';
 import IconContainer from './../components/IconContainer';
 import MaterialIcon from './../components/MaterialIcon';
-
+import { useNavigate } from 'react-router-dom';
 const CoreOfferings = () => {
   const sectionRef = React.useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
+ 
+  const navigate = useNavigate();
+  const handleExploreContent = () => {
+    // Navigate to homepage (problems list)
+    navigate('/problems');
+  };
+
+  const handleBrowseLibrary = () => {
+    // Navigate to homepage (problems list)
+    navigate('/visualise/graphs/bfs');
+  };
 
   // Animation variants for the header
   const headerVariants = {
@@ -160,7 +171,9 @@ const CoreOfferings = () => {
                     transition={{ duration: 0.4, delay: 0.9 }}
                     className="mt-auto flex items-center gap-4"
                   >
-                    <button className="flex items-center gap-2 text-sm font-bold text-primary-container group-hover:gap-3 transition-all">
+                    <button
+                      onClick={handleExploreContent} 
+                    className="flex items-center gap-2 text-sm font-bold text-primary-container group-hover:gap-3 transition-all">
                       Launch Lab <MaterialIcon icon="arrow_forward" className="text-base" />
                     </button>
                   </motion.div>
@@ -243,7 +256,8 @@ const CoreOfferings = () => {
                     transition={{ duration: 0.4, delay: 1.0 }}
                     whileHover={{ scale: 1.02 }}
                     className="mt-auto w-full py-3 rounded-xl border border-outline-variant/20 hover:bg-surface-container-highest text-sm font-bold transition-colors"
-                  >
+                    onClick={handleBrowseLibrary}
+                 >
                     Browse Library
                   </motion.button>
                 </div>

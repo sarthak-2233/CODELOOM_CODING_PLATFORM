@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 
 const Hero = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [typingText, setTypingText] = useState('');
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -85,6 +89,16 @@ const Hero = () => {
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
   }, []);
+
+  // Handle button clicks
+  const handleStartLearning = () => {
+    navigate('/login');
+  };
+
+  const handleExploreContent = () => {
+    // Navigate to homepage (problems list)
+    navigate('/problems');
+  };
 
   // Framer Motion variants
   const containerVariants = {
@@ -292,21 +306,48 @@ const Hero = () => {
             </motion.p>
             
             <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
+              {/* Show Start Learning button ONLY if user is NOT logged in */}
+              {!isAuthenticated && (
+                <motion.div
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  <Button 
+                    variant="primary" 
+                    onClick={handleStartLearning}
+                  >
+                    Start Learning
+                  </Button>
+                </motion.div>
+              )}
+              
+              {/* Explore Content button - always visible, navigates to homepage */}
               <motion.div
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
-                <Button variant="primary">Start Learning</Button>
-              </motion.div>
-              <motion.div
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <Button variant="secondary">Explore Content</Button>
+                <Button 
+                  variant="secondary" 
+                  onClick={handleExploreContent}
+                >
+                  Explore Content
+                </Button>
               </motion.div>
             </motion.div>
+
+            {/* Optional: Show welcome back message when logged in */}
+            {isAuthenticated && user && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-4 text-sm text-[#B6FE00]"
+              >
+                ✨ Welcome back, {user.name || user.emailId?.split('@')[0]}!
+              </motion.div>
+            )}
           </motion.div>
           
           <motion.div

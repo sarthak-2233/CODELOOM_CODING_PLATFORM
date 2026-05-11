@@ -31,6 +31,16 @@ const IconClose = () => (
     <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
   </svg>
 );
+const IconPrev = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clipRule="evenodd" />
+  </svg>
+);
+const IconNext = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clipRule="evenodd" />
+  </svg>
+);
 // ──────────────────────────────────────────────────────────────────────────────
 
 function HomePage() {
@@ -41,6 +51,10 @@ function HomePage() {
   const [filters, setFilters] = useState({ difficulty: 'all', status: 'all' });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTags, setActiveTags] = useState([]);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const problemsPerPage = 3;
 
   const availableTags = ['Array', 'String', 'linkedList', 'graph', 'dp'];
 
@@ -69,6 +83,7 @@ function HomePage() {
   const addTag = (tag) => { if (!activeTags.includes(tag)) setActiveTags([...activeTags, tag]); };
   const clearAllTags = () => setActiveTags([]);
 
+  // Filter problems based on search, difficulty, status, and tags
   const filteredProblems = problems.filter(problem => {
     const difficultyMatch = filters.difficulty === 'all' || problem.difficulty?.toLowerCase() === filters.difficulty;
     const statusMatch = filters.status === 'all' ||
@@ -78,6 +93,30 @@ function HomePage() {
     const activeTagMatch = activeTags.length === 0 || activeTags.some(t => tagsList.includes(t));
     return difficultyMatch && statusMatch && searchMatch && activeTagMatch;
   });
+
+  // Pagination logic
+  const indexOfLastProblem = currentPage * problemsPerPage;
+  const indexOfFirstProblem = indexOfLastProblem - problemsPerPage;
+  const currentProblems = filteredProblems.slice(indexOfFirstProblem, indexOfLastProblem);
+  const totalPages = Math.ceil(filteredProblems.length / problemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, searchTerm, activeTags]);
 
   const isSolved = (problem) => solvedProblems.some(sp => sp._id === problem._id);
 
@@ -118,7 +157,7 @@ function HomePage() {
             </h1>
             <p style={{ color: '#A7ACA9', fontSize: 12, letterSpacing: '0.12em', marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#68FCBF' }} />
-              {problems.length} CHALLENGES AVAILABLE
+              {filteredProblems.length} CHALLENGES AVAILABLE
             </p>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
@@ -197,10 +236,10 @@ function HomePage() {
               </tr>
             </thead>
             <tbody>
-              {filteredProblems.map((problem, i) => (
+              {currentProblems.map((problem, i) => (
                 <tr
                   key={problem._id}
-                  style={{ borderBottom: i < filteredProblems.length - 1 ? '1px solid rgba(182,255,0,0.05)' : 'none', transition: 'background 0.15s' }}
+                  style={{ borderBottom: i < currentProblems.length - 1 ? '1px solid rgba(182,255,0,0.05)' : 'none', transition: 'background 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(182,255,0,0.04)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
@@ -241,7 +280,7 @@ function HomePage() {
                   </td>
                 </tr>
               ))}
-              {filteredProblems.length === 0 && (
+              {currentProblems.length === 0 && (
                 <tr>
                   <td colSpan={5} style={{ padding: '60px', textAlign: 'center', color: '#A7ACA9', fontSize: 14 }}>
                     No problems match your filters.
@@ -251,6 +290,145 @@ function HomePage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Component */}
+        {filteredProblems.length > 0 && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            gap: '12px', 
+            marginTop: '40px',
+            padding: '20px'
+          }}>
+            {/* Previous Button */}
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                background: currentPage === 1 ? 'rgba(32,39,36,0.3)' : 'rgba(182,255,0,0.1)',
+                border: currentPage === 1 ? '1px solid rgba(113,119,115,0.2)' : '1px solid rgba(182,255,0,0.3)',
+                borderRadius: '999px',
+                color: currentPage === 1 ? '#A7ACA9' : '#B6FE00',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.15s'
+              }}
+            >
+              <IconPrev />
+              Previous
+            </button>
+
+            {/* Page Numbers */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => {
+                // Show current page, first, last, and neighbors
+                if (
+                  number === 1 ||
+                  number === totalPages ||
+                  (number >= currentPage - 1 && number <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={number}
+                      onClick={() => paginate(number)}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: currentPage === number ? '#B6FE00' : 'rgba(32,39,36,0.5)',
+                        border: currentPage === number ? 'none' : '1px solid rgba(182,255,0,0.2)',
+                        color: currentPage === number ? '#0A0F0D' : '#F9FDF9',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: currentPage === number ? '700' : '500',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={e => {
+                        if (currentPage !== number) {
+                          e.currentTarget.style.background = 'rgba(182,255,0,0.15)';
+                          e.currentTarget.style.borderColor = 'rgba(182,255,0,0.4)';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (currentPage !== number) {
+                          e.currentTarget.style.background = 'rgba(32,39,36,0.5)';
+                          e.currentTarget.style.borderColor = 'rgba(182,255,0,0.2)';
+                        }
+                      }}
+                    >
+                      {number}
+                    </button>
+                  );
+                }
+                
+                // Show ellipsis
+                if (
+                  (number === 2 && currentPage > 3) ||
+                  (number === totalPages - 1 && currentPage < totalPages - 2)
+                ) {
+                  return (
+                    <span
+                      key={number}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#A7ACA9',
+                        fontSize: '14px'
+                      }}
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                background: currentPage === totalPages ? 'rgba(32,39,36,0.3)' : 'rgba(182,255,0,0.1)',
+                border: currentPage === totalPages ? '1px solid rgba(113,119,115,0.2)' : '1px solid rgba(182,255,0,0.3)',
+                borderRadius: '999px',
+                color: currentPage === totalPages ? '#A7ACA9' : '#B6FE00',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.15s'
+              }}
+            >
+              Next
+              <IconNext />
+            </button>
+          </div>
+        )}
+
+        {/* Optional: Showing current page info */}
+        {filteredProblems.length > 0 && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '16px',
+            fontSize: '12px',
+            color: '#A7ACA9'
+          }}>
+            Showing {indexOfFirstProblem + 1} to {Math.min(indexOfLastProblem, filteredProblems.length)} of {filteredProblems.length} problems
+          </div>
+        )}
       </main>
 
       {/* Glow blobs */}

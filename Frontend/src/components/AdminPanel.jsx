@@ -112,33 +112,33 @@ function AdminPanel() {
   };
 
   // ✅ FIX: filter only selected languages before sending + add problemCreator
-  const onSubmit = async (data) => {
-    try {
-      if (selectedLangs.length === 0) {
-        alert('Please select at least one language!');
-        return;
-      }
-
-      // ✅ get user id from token stored in localStorage
-      const token = localStorage.getItem('token');
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const userId = payload._id;
-
-      const filteredData = {
-        ...data,
-        startCode: data.startCode.filter(s => selectedLangs.includes(s.language)),
-        referenceSolution: data.referenceSolution.filter(s => selectedLangs.includes(s.language)),
-        problemCreator: userId,  // ✅ send problemCreator
-        tags: data.tags[0] 
-      };
-
-      await axiosClient.post('/problem/create', filteredData);
-      alert('Problem created successfully!');
-      navigate('/admin/dashboard');
-    } catch (error) {
-      alert(`Error: ${error.response?.data?.message || error.message}`);
+ const onSubmit = async (data) => {
+  try {
+    if (selectedLangs.length === 0) {
+      alert('Please select at least one language!');
+      return;
     }
-  };
+
+    const token = localStorage.getItem('token');
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userId = payload._id;
+
+    const filteredData = {
+      ...data,
+      startCode: data.startCode.filter(s => selectedLangs.includes(s.language)),
+      referenceSolution: data.referenceSolution.filter(s => selectedLangs.includes(s.language)),
+      problemCreator: userId,
+      tags: data.tags  // ✅ Send the entire array, not just the first element
+    };
+    
+    console.log(filteredData);
+    await axiosClient.post('/problem/create', filteredData);
+    alert('Problem created successfully!');
+    navigate('/admin/dashboard');
+  } catch (error) {
+    alert(`Error: ${error.response?.data?.message || error.message}`);
+  }
+};
 
   const languageOptions = [
     { value: 'C++', label: 'C++', icon: '🔵', extension: 'cpp' },

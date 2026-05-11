@@ -16,6 +16,7 @@ const videoRouter = require("./routes/videoCreator");
 const passport = require('passport');
 
 require('./Config/googleAuth'); 
+require('./Config/githubAuth');
 // CORS
 const cors=require('cors')
 app.use(cors({

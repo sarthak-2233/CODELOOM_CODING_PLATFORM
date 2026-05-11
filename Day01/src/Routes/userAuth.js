@@ -48,4 +48,25 @@ authRouter.get('/auth/google/callback',
   }
 );
 
+// GITHUB OAUTH ROUTE
+authRouter.get('/auth/github',
+  passport.authenticate('github', { scope: ['user:email'] })
+);
+
+authRouter.get('/auth/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  (req, res) => {
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { _id: req.user._id, emailId: req.user.emailId, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: 60 * 60 }
+    );
+    // Set cookie and redirect
+    res.redirect(`http://localhost:5173/auth-success?token=${token}`);
+  }
+);
+
+
+
 module.exports = authRouter

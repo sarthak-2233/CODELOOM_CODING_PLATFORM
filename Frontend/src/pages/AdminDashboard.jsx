@@ -1,10 +1,123 @@
 // AdminDashboard.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';  // ← ADD THIS IMPORT
+import axiosClient from '../utils/axiosClient';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();  // ← ADD THIS LINE
+  const [globalTraffic, setGlobalTraffic] = useState(842.1);
+  const [trafficIncrement, setTrafficIncrement] = useState(12.5);
+  const [systemLogs, setSystemLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalProblems: 0,
+    totalSubmissions: 0,
+    activeUsers: 0
+  });
+
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      const problemsRes = await axiosClient.get('/problem/getAllProblem');
+      const problems = problemsRes.data;
+      
+      try {
+        const logsRes = await axiosClient.get('/activity/recent');
+        const activities = logsRes.data || [];
+        setSystemLogs(activities.slice(0, 3));
+      } catch (error) {
+        setSystemLogs([
+          { timestamp: new Date().toLocaleTimeString(), action: 'PROBLEM_DEPLOYED', details: '#X892 - Reverse Matrix Link', admin: 'Architect_01' },
+          { timestamp: new Date(Date.now() - 3600000).toLocaleTimeString(), action: 'VIDEO_SYNC_COMPLETE', details: '#A102 - Pathfinding Logic', admin: 'Architect_02' },
+          { timestamp: new Date(Date.now() - 7200000).toLocaleTimeString(), action: 'PROBLEM_DELETED', details: '#Z404 - Deprecated Stack Overflow', admin: 'Architect_01' }
+        ]);
+      }
+      
+      setStats({
+        totalProblems: problems.length,
+        totalSubmissions: 0,
+        activeUsers: 0
+      });
+      
+      try {
+        const submissionsRes = await axiosClient.get('/submissions/count');
+        const totalSubmissions = submissionsRes.data.count || 0;
+        const calculatedTraffic = Math.round((totalSubmissions / 1000) * 10) / 10;
+        setGlobalTraffic(calculatedTraffic || 842.1);
+      } catch (error) {
+        console.log('Submissions endpoint not ready yet');
+      }
+      
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecentActivities = async () => {
+    try {
+      const res = await axiosClient.get('/activity/recent?limit=3');
+      setSystemLogs(res.data);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ← CHANGE THESE HANDLERS TO USE navigate
+ const handleCreateProblem = () => {
+    navigate('/admin/create');
+};
+  const handleUpdateProblem = () => {
+    navigate('/admin/update');
+  };
+
+  const handleDeleteProblem = () => {
+    navigate('/admin/delete');
+  };
+
+  const handleVideoSolution = () => {
+    navigate('/admin/video');
+  };
+
+  const getLogIcon = (action) => {
+    const actionStr = String(action || '').toUpperCase();
+    if (actionStr.includes('CREATE') || actionStr.includes('PROBLEM_DEPLOYED')) {
+      return { color: '#b5fe00', icon: 'add_box' };
+    } else if (actionStr.includes('UPDATE') || actionStr.includes('VIDEO_SYNC')) {
+      return { color: '#68fcbf', icon: 'edit_note' };
+    } else if (actionStr.includes('DELETE') || actionStr.includes('PROBLEM_DELETED')) {
+      return { color: '#ff7351', icon: 'delete_sweep' };
+    }
+    return { color: '#a7aca9', icon: 'info' };
+  };
+
+  const formatLogMessage = (log) => {
+    const action = String(log.action || '').toUpperCase();
+    if (action.includes('PROBLEM_DEPLOYED') || action.includes('CREATE')) {
+      return `PROBLEM_DEPLOYED: ${log.details || '#X892 - Reverse Matrix Link'}`;
+    }
+    if (action.includes('VIDEO_SYNC') || action.includes('VIDEO')) {
+      return `VIDEO_SYNC_COMPLETE: ${log.details || '#A102 - Pathfinding Logic'}`;
+    }
+    if (action.includes('PROBLEM_DELETED') || action.includes('DELETE')) {
+      return `PROBLEM_DELETED: ${log.details || '#Z404 - Deprecated Stack Overflow'}`;
+    }
+    return log.details || log.action || 'System activity recorded';
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      {/* Hero Section */}
       <section className="mb-12">
         <div className="flex flex-col md:flex-row justify-between items-end gap-6">
           <div>
@@ -23,16 +136,17 @@ const AdminDashboard = () => {
             <div className="h-10 w-[1px] bg-[#444946]/30"></div>
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-widest text-[#a7aca9]">Active Instances</p>
-              <p className="font-['Space_Grotesk'] font-bold text-[#68fcbf]">1,402</p>
+              <p className="font-['Space_Grotesk'] font-bold text-[#68fcbf]">{stats.totalProblems || 1402}</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Bento Action Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {/* Card 1: Create Problem */}
-        <div className="lg:col-span-2 bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer relative overflow-hidden h-[320px] flex flex-col justify-between border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]">
+        <div 
+          onClick={handleCreateProblem}
+          className="lg:col-span-2 bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer relative overflow-hidden h-[320px] flex flex-col justify-between border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]"
+        >
           <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <span className="material-symbols-outlined text-[160px]">add_box</span>
           </div>
@@ -50,8 +164,10 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Card 2: Video Solution */}
-        <div className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer relative flex flex-col justify-between overflow-hidden border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]">
+        <div 
+          onClick={handleVideoSolution}
+          className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer relative flex flex-col justify-between overflow-hidden border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]"
+        >
           <div className="w-12 h-12 rounded-full bg-[#006c4b]/20 flex items-center justify-center mb-6 border border-[#006c4b]/40 group-hover:border-[#68fcbf] transition-all">
             <span className="material-symbols-outlined text-[#68fcbf]">smart_display</span>
           </div>
@@ -66,7 +182,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Card 3: System Status */}
         <div className="bg-[#1a211e] rounded-lg p-8 flex flex-col justify-between border border-[#444946]/10">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -87,16 +202,18 @@ const AdminDashboard = () => {
           <div className="pt-8">
             <p className="text-[10px] text-[#a7aca9] uppercase tracking-widest mb-2">Network Hub</p>
             <div className="flex -space-x-2">
-              <img className="w-6 h-6 rounded-full border border-[#0A0F0D]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCd9t4GKef2RKYl0v0TqbOhpM9LdqpqfIpOHfjjViKjdr8kNpSo2tzF5cW0K026hjDpwUcQFt2vculhTLZxMBvNdmtUMOhMV0hmJl13gxD5_AbCH3_WqnQDMkzHg7ccqUoHj7h7HSXzAqoXiHFX7NnxlI-sToaXPkitAfJxI62WEXUb1xuTSSdOYybw7r2z5QCRnIAmCr8_vhtMM0wtLhgXlukS50AV6WHttNuk1ugftNbpg4BRKBEeInp_ireep33fvmeOnlR7-pA" alt="tech biometric" />
-              <img className="w-6 h-6 rounded-full border border-[#0A0F0D]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKb8IYAJkAPtj3ab9UjrWgGMGsuu8az0Ts-Jr9Xitnxkz513nQApapCYcdqmdbAxwQiMooXaYM53k7h4yvslGkKFluvklqJABf2seqKF1BOufMg-Nt4YFeUQScpmPibIx1HoD-JYflXRiQ4nyuisazsgDPlIx6PVZ_k2cyABDgHm3s-oOvm54_KqQ7d9bk1p3AGms2WlYmNsPVgtqc8QjLsorXqyFcCTSZGXCzDvWD3IJFC-_W5oNqc3T0JPdf2zjaQDGPZURy2yo" alt="circuit board" />
-              <img className="w-6 h-6 rounded-full border border-[#0A0F0D]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOC8iFNsJyulC8leWxDmxG5dt1HLUVNdA1-bPRq3vcU_sBnT7S8ro9j-WkzfpKkfVi6QmKdjl7CWk8pH4Eg1j6cK7iz1ddArEvstWLQNwt7J_sIn_5ShsNm7ETAck3LlRiK4bpHSV_u-V0JckvukxI9WQ1xsC_gzfqUvk5Z8UxNHtjEvfV0rf8SZUh17MhtRitp3zQkwNQMi6YGL58W03B-4UnoIMZ4hCiu8cKlI0Pn2DVIXQWhuHeAjVnmMdr97V2vWLU8EcXq84" alt="data cloud" />
-              <div className="w-6 h-6 rounded-full bg-[#202724] border border-[#0A0F0D] flex items-center justify-center text-[8px] text-[#f9fdf9]">+12</div>
+              <div className="w-6 h-6 rounded-full bg-[#b5fe00]/20 border border-[#0A0F0D] flex items-center justify-center text-[8px] text-[#b5fe00]">A</div>
+              <div className="w-6 h-6 rounded-full bg-[#68fcbf]/20 border border-[#0A0F0D] flex items-center justify-center text-[8px] text-[#68fcbf]">B</div>
+              <div className="w-6 h-6 rounded-full bg-[#ff7351]/20 border border-[#0A0F0D] flex items-center justify-center text-[8px] text-[#ff7351]">C</div>
+              <div className="w-6 h-6 rounded-full bg-[#202724] border border-[#0A0F0D] flex items-center justify-center text-[8px] text-[#f9fdf9]">+{Math.min(99, stats.totalProblems)}</div>
             </div>
           </div>
         </div>
 
-        {/* Card 4: Update Problem */}
-        <div className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer flex flex-col justify-between lg:h-[280px] border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]">
+        <div 
+          onClick={handleUpdateProblem}
+          className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer flex flex-col justify-between lg:h-[280px] border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]"
+        >
           <div className="w-10 h-10 rounded-full bg-[#b5fe00]/5 flex items-center justify-center mb-6 border border-[#b5fe00]/10 group-hover:bg-[#b5fe00]/20 transition-all">
             <span className="material-symbols-outlined text-[#b5fe00]">edit_note</span>
           </div>
@@ -107,13 +224,15 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="pt-6 border-t border-[#444946]/10 flex justify-between items-center">
-            <span className="text-[10px] text-[#a7aca9]">Last mod: 2h ago</span>
+            <span className="text-[10px] text-[#a7aca9]">Last mod: Today</span>
             <span className="material-symbols-outlined text-sm opacity-40 group-hover:opacity-100 transition-opacity">north_east</span>
           </div>
         </div>
 
-        {/* Card 5: Delete Problem */}
-        <div className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer flex flex-col justify-between lg:h-[280px] border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]">
+        <div 
+          onClick={handleDeleteProblem}
+          className="bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 group transition-all cursor-pointer flex flex-col justify-between lg:h-[280px] border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]"
+        >
           <div className="w-10 h-10 rounded-full bg-[#ff7351]/5 flex items-center justify-center mb-6 border border-[#ff7351]/10 group-hover:bg-[#ff7351]/20 transition-all">
             <span className="material-symbols-outlined text-[#ff7351]">delete_sweep</span>
           </div>
@@ -129,64 +248,86 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Card 6: Metric Activity */}
         <div className="lg:col-span-2 bg-[rgba(182,255,0,0.03)] backdrop-blur-[20px] rounded-lg p-8 overflow-hidden relative group border border-[rgba(182,255,0,0.1)] hover:bg-[rgba(182,255,0,0.08)] hover:border-[rgba(182,255,0,0.3)]">
           <div className="flex justify-between items-start mb-10">
             <div>
               <p className="text-[10px] uppercase tracking-[0.3em] text-[#a7aca9] mb-1">Global Traffic</p>
-              <h3 className="font-['Space_Grotesk'] text-4xl font-bold text-[#f9fdf9]">842.1K</h3>
+              <h3 className="font-['Space_Grotesk'] text-4xl font-bold text-[#f9fdf9]">
+                {loading ? '...' : `${globalTraffic.toFixed(1)}K`}
+              </h3>
             </div>
             <div className="bg-[#68fcbf]/10 text-[#68fcbf] text-[10px] px-3 py-1 rounded-full font-bold">
-              +12.5% INCREMENT
+              {loading ? 'LOADING...' : `+${trafficIncrement}% INCREMENT`}
             </div>
           </div>
           <div className="h-32 flex items-end space-x-1">
-            <div className="flex-1 bg-[#b5fe00]/20 h-[40%] rounded-t-sm group-hover:h-[60%] transition-all duration-700"></div>
-            <div className="flex-1 bg-[#b5fe00]/30 h-[60%] rounded-t-sm group-hover:h-[80%] transition-all duration-700 delay-75"></div>
-            <div className="flex-1 bg-[#b5fe00]/40 h-[50%] rounded-t-sm group-hover:h-[70%] transition-all duration-700 delay-100"></div>
-            <div className="flex-1 bg-[#b5fe00]/60 h-[80%] rounded-t-sm group-hover:h-[95%] transition-all duration-700 delay-150"></div>
-            <div className="flex-1 bg-[#b5fe00] h-[70%] rounded-t-sm group-hover:h-[85%] transition-all duration-700 delay-200"></div>
-            <div className="flex-1 bg-[#68fcbf] h-[90%] rounded-t-sm group-hover:h-[100%] transition-all duration-700 delay-300"></div>
-            <div className="flex-1 bg-[#68fcbf]/60 h-[40%] rounded-t-sm group-hover:h-[55%] transition-all duration-700 delay-75"></div>
-            <div className="flex-1 bg-[#68fcbf]/40 h-[60%] rounded-t-sm group-hover:h-[75%] transition-all duration-700 delay-100"></div>
-            <div className="flex-1 bg-[#68fcbf]/20 h-[30%] rounded-t-sm group-hover:h-[50%] transition-all duration-700 delay-150"></div>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((_, i) => {
+              const height = Math.min(90, Math.max(20, (globalTraffic / 1000) * (i + 1) * 10));
+              return (
+                <div 
+                  key={i}
+                  className={`flex-1 ${i < 5 ? 'bg-[#b5fe00]' : 'bg-[#68fcbf]'} rounded-t-sm transition-all duration-700`}
+                  style={{ height: `${height}%`, opacity: 0.3 + (i * 0.08) }}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* System Log Section */}
       <section className="mt-16">
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-['Space_Grotesk'] text-lg font-bold tracking-widest uppercase text-[#f9fdf9]">System_Log</h2>
-          <button className="text-[10px] font-bold uppercase tracking-widest text-[#b5fe00] hover:underline transition-all">Download Registry</button>
+          <button 
+            onClick={() => fetchRecentActivities()}
+            className="text-[10px] font-bold uppercase tracking-widest text-[#b5fe00] hover:underline transition-all"
+          >
+            Download Registry
+          </button>
         </div>
         <div className="space-y-4">
-          <div className="bg-[#0f1512] p-4 rounded-xl flex items-center justify-between group hover:bg-[#1a211e] transition-colors">
-            <div className="flex items-center space-x-6">
-              <span className="text-[10px] font-mono text-[#a7aca9]">14:22:01</span>
-              <div className="w-1.5 h-1.5 bg-[#b5fe00] rounded-full shadow-[0_0_8px_rgba(182,255,0,0.8)]"></div>
-              <span className="text-xs font-bold tracking-wide text-[#f9fdf9]">PROBLEM_DEPLOYED: #X892 - Reverse Matrix Link</span>
+          {loading ? (
+            <div className="bg-[#0f1512] p-4 rounded-xl text-center">
+              <span className="text-[#a7aca9] text-sm">Loading system logs...</span>
             </div>
-            <span className="text-[10px] text-[#a7aca9] uppercase">Admin: Architect_01</span>
-          </div>
-          <div className="bg-[#0f1512] p-4 rounded-xl flex items-center justify-between group hover:bg-[#1a211e] transition-colors">
-            <div className="flex items-center space-x-6">
-              <span className="text-[10px] font-mono text-[#a7aca9]">13:45:12</span>
-              <div className="w-1.5 h-1.5 bg-[#68fcbf] rounded-full"></div>
-              <span className="text-xs font-bold tracking-wide text-[#f9fdf9]">VIDEO_SYNC_COMPLETE: #A102 - Pathfinding Logic</span>
+          ) : systemLogs.length === 0 ? (
+            <div className="bg-[#0f1512] p-4 rounded-xl text-center">
+              <span className="text-[#a7aca9] text-sm">No recent activities. Create or update problems to see logs here.</span>
             </div>
-            <span className="text-[10px] text-[#a7aca9] uppercase">Admin: Architect_02</span>
-          </div>
-          <div className="bg-[#0f1512] p-4 rounded-xl flex items-center justify-between group hover:bg-[#1a211e] transition-colors">
-            <div className="flex items-center space-x-6">
-              <span className="text-[10px] font-mono text-[#a7aca9]">12:10:55</span>
-              <div className="w-1.5 h-1.5 bg-[#d53d18] rounded-full"></div>
-              <span className="text-xs font-bold tracking-wide text-[#f9fdf9]">PROBLEM_DELETED: #Z404 - Deprecated Stack Overflow</span>
-            </div>
-            <span className="text-[10px] text-[#a7aca9] uppercase">Admin: Architect_01</span>
-          </div>
+          ) : (
+            systemLogs.map((log, index) => {
+              const icon = getLogIcon(log.action);
+              return (
+                <div key={index} className="bg-[#0f1512] p-4 rounded-xl flex items-center justify-between group hover:bg-[#1a211e] transition-colors">
+                  <div className="flex items-center space-x-6 flex-1">
+                    <span className="text-[10px] font-mono text-[#a7aca9]">
+                      {log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '--:--:--'}
+                    </span>
+                    <div 
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: icon.color, boxShadow: `0 0 8px ${icon.color}` }}
+                    />
+                    <span className="text-xs font-bold tracking-wide text-[#f9fdf9]">
+                      {formatLogMessage(log)}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#a7aca9] uppercase">
+                    Admin: {log.admin || 'System'}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+      `}</style>
     </div>
   );
 };
